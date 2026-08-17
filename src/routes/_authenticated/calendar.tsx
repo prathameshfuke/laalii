@@ -145,7 +145,7 @@ function CalendarPage() {
         </div>
       </Section>
 
-      {p.confidence < 0.6 ? (
+      {p.confidence === "low" ? (
         <Section>
           <p className="text-sm text-muted-foreground">
             Predictions are still soft — a couple more logged cycles and these edges will firm up.
