@@ -21,7 +21,7 @@ const HER_NAV = [
 
 const HIS_NAV = [
   { to: "/partner", label: "Today", Icon: IconHeart },
-  { to: "/partner/history", label: "History", Icon: IconCalendar },
+  
   { to: "/partner/settings", label: "Account", Icon: IconGear },
 ];
 

@@ -8,9 +8,9 @@ import { today } from "@/lib/cycle";
 export const Route = createFileRoute("/_authenticated/learn")({
   head: () => ({
     meta: [
-      { title: "Learn — Laali" },
+      { title: "Learn: Laali" },
       { name: "description", content: "Plain-language notes on each phase of your cycle." },
-      { property: "og:title", content: "Learn — Laali" },
+      { property: "og:title", content: "Learn: Laali" },
       { property: "og:description", content: "Understand each phase of your cycle." },
       { name: "robots", content: "noindex" },
     ],
