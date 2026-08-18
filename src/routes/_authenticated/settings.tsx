@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, Section } from "@/components/AppShell";
@@ -6,44 +7,71 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  signOutCompletely,
   useCreateInvite,
+  useDeleteAllData,
+  useDisconnect,
   useMyLinks,
   useProfile,
-  useRevokeLink,
+  useRegenerateCode,
   useUpdateLink,
   useUpdateProfile,
+  type Intent,
 } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Laali" },
-      { name: "description", content: "Profile, sharing controls and your partner connection." },
-      { property: "og:title", content: "Settings — Laali" },
-      { property: "og:description", content: "Control what you track and what you share." },
+      { title: "Settings: Laali" },
+      { name: "description", content: "Your profile, your goal, sharing controls and your data." },
+      { property: "og:title", content: "Settings: Laali" },
+      {
+        property: "og:description",
+        content: "Control what Laali tracks, what your partner sees and what stays private.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: SettingsPage,
 });
 
+const INTENTS: Array<{ value: Intent; label: string }> = [
+  { value: "tracking", label: "Just tracking" },
+  { value: "conceive", label: "Trying to conceive" },
+  { value: "avoid", label: "Avoiding pregnancy" },
+];
+
 function SettingsPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const profile = useProfile();
   const updateProfile = useUpdateProfile();
   const links = useMyLinks();
   const createInvite = useCreateInvite();
   const updateLink = useUpdateLink();
-  const revoke = useRevokeLink();
+  const regenerate = useRegenerateCode();
+  const disconnect = useDisconnect();
+  const deleteData = useDeleteAllData();
   const [name, setName] = useState<string | null>(null);
 
   const link = (links.data ?? [])[0] ?? null;
   const displayName = name ?? profile.data?.display_name ?? "";
+  const intent = profile.data?.intent ?? "tracking";
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await signOutCompletely(qc);
     navigate({ to: "/", replace: true });
   }
 
@@ -94,24 +122,52 @@ function SettingsPage() {
         </div>
       </Section>
 
-      <Section title="Partner" hint="you're in control">
+      <Section title="What you are here for" hint="changes how Laali talks to you">
+        <div className="paper grid gap-2 p-3">
+          {INTENTS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={intent === o.value}
+              onClick={() => updateProfile.mutate({ intent: o.value })}
+              className="rounded-2xl border px-4 py-3 text-left text-sm"
+              style={{
+                borderColor: intent === o.value ? "var(--ink)" : "var(--border)",
+                background:
+                  intent === o.value
+                    ? "color-mix(in oklab, var(--rose) 16%, transparent)"
+                    : "transparent",
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {intent === "avoid" ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Laali is not contraception. Predicted safe days are estimates, not protection.
+          </p>
+        ) : null}
+      </Section>
+
+      <Section title="Couples Mode" hint="you are in control">
         {!link ? (
           <div className="paper p-5">
             <p className="text-sm text-muted-foreground">
               Create an invite code and share it with your partner. They sign in, enter the code,
-              and only see what you switch on below.
+              and see only what you switch on.
             </p>
             <Button
               className="mt-4 h-11 w-full rounded-full"
               disabled={createInvite.isPending}
               onClick={() =>
                 createInvite.mutate(
-                  { share_phase: true, share_mood: true, share_symptoms: false },
-                  { onError: () => toast.error("Couldn't create the invite") },
+                  { share_phase: true },
+                  { onError: () => toast.error("Could not create the invite") },
                 )
               }
             >
-              {createInvite.isPending ? "Creating…" : "Create invite code"}
+              {createInvite.isPending ? "Creating" : "Create invite code"}
             </Button>
           </div>
         ) : (
@@ -120,18 +176,31 @@ function SettingsPage() {
               <div className="rounded-2xl border border-dashed border-border p-4 text-center">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Invite code</p>
                 <p className="numeral mt-1 text-3xl tracking-[0.3em]">{link.invite_code}</p>
-                <button
-                  className="mt-2 text-xs underline underline-offset-4"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(link.invite_code);
-                    toast.success("Code copied");
-                  }}
-                >
-                  Copy code
-                </button>
+                <div className="mt-2 flex justify-center gap-4 text-xs">
+                  <button
+                    className="underline underline-offset-4"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(link.invite_code);
+                      toast.success("Code copied");
+                    }}
+                  >
+                    Copy code
+                  </button>
+                  <button
+                    className="underline underline-offset-4"
+                    disabled={regenerate.isPending}
+                    onClick={() =>
+                      regenerate.mutate(link.id, {
+                        onSuccess: () => toast.success("New code ready, the old one is dead"),
+                      })
+                    }
+                  >
+                    Generate a new one
+                  </button>
+                </div>
               </div>
             ) : (
-              <p className="text-sm">Connected. Your partner can see the switches you leave on.</p>
+              <p className="text-sm">Connected. Your partner sees only the switches you leave on.</p>
             )}
 
             <Toggle
@@ -152,15 +221,62 @@ function SettingsPage() {
               checked={link.share_symptoms}
               onChange={(v) => updateLink.mutate({ id: link.id, patch: { share_symptoms: v } })}
             />
+            {intent === "conceive" ? (
+              <Toggle
+                label="Share the fertile window"
+                hint="A simple indicator only, for trying to conceive. Off unless you turn it on."
+                checked={link.share_fertile}
+                onChange={(v) => updateLink.mutate({ id: link.id, patch: { share_fertile: v } })}
+              />
+            ) : null}
 
-            <button
-              className="text-sm text-destructive underline underline-offset-4"
-              onClick={() => revoke.mutate(link.id)}
-            >
-              Disconnect partner
-            </button>
+            <p className="text-xs text-muted-foreground">
+              Intimacy logs and your private notes are never shared, no matter what is switched on.
+            </p>
+
+            <Confirm
+              trigger={
+                <button className="text-sm text-destructive underline underline-offset-4">
+                  Disconnect partner
+                </button>
+              }
+              title="Disconnect your partner?"
+              body="Their view goes blank straight away and the invite code stops working. You can always create a new one."
+              confirmLabel="Disconnect"
+              onConfirm={() =>
+                disconnect.mutate(link.id, { onSuccess: () => toast.success("Disconnected") })
+              }
+            />
           </div>
         )}
+      </Section>
+
+      <Section title="Your data">
+        <div className="paper space-y-4 p-5">
+          <p className="text-sm text-muted-foreground">
+            Deleting your data clears every cycle, day log and intimacy entry from this account. Your
+            sign in and any partner connection stay as they are.
+          </p>
+          <Confirm
+            trigger={
+              <button className="text-sm text-destructive underline underline-offset-4">
+                Delete all my tracked data
+              </button>
+            }
+            title="Delete everything you have logged?"
+            body="Cycles, day logs and intimacy entries are removed for good. This cannot be undone."
+            confirmLabel="Delete it all"
+            onConfirm={() =>
+              deleteData.mutate(undefined, {
+                onSuccess: () => toast.success("Your data has been cleared"),
+                onError: (e) =>
+                  toast.error("Could not delete that", {
+                    description: e instanceof Error ? e.message : "Please try again.",
+                  }),
+              })
+            }
+          />
+        </div>
       </Section>
 
       <Section>
@@ -172,6 +288,36 @@ function SettingsPage() {
         </button>
       </Section>
     </AppShell>
+  );
+}
+
+function Confirm({
+  trigger,
+  title,
+  body,
+  confirmLabel,
+  onConfirm,
+}: {
+  trigger: React.ReactNode;
+  title: string;
+  body: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{body}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep it</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
