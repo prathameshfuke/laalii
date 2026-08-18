@@ -98,7 +98,11 @@ export function LogSheet({
     setMucus(existing?.mucus ?? "");
     setMeds(existing?.medications ?? "");
     setStartsPeriod(false);
-  }, [open, existing]);
+    setActivity(existingIntimacy?.activity ?? null);
+    setDesire(existingIntimacy?.desire ?? null);
+    setIntimacySymptoms(existingIntimacy?.symptoms ?? []);
+    setShowIntimacy(Boolean(existingIntimacy));
+  }, [open, existing, existingIntimacy]);
 
   const mascotState: MascotState = flow
     ? "comforted"
@@ -123,6 +127,14 @@ export function LogSheet({
         mucus: mucus || null,
         medications: meds.trim() || null,
       });
+      if (activity || desire !== null || intimacySymptoms.length) {
+        await saveIntimacy.mutateAsync({
+          log_date: date,
+          activity: (activity as "none" | "protected" | "unprotected" | null) ?? null,
+          desire,
+          symptoms: intimacySymptoms,
+        });
+      }
       if (startsPeriod) await startPeriod.mutateAsync(date);
       toast.success("Logged", { description: formatDay(fromISO(date)) });
       onOpenChange(false);
