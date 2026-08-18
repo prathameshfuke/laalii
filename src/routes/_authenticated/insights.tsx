@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/insights")({
 });
 
 const CONFIDENCE_COPY = {
-  low: "Early days — Laali is still learning your rhythm.",
+  low: "Early days. Laali is still learning your rhythm.",
   medium: "Getting there. A couple more cycles will sharpen this.",
   high: "Your pattern is steady and predictions are firm.",
 } as const;
@@ -75,7 +75,7 @@ function InsightsPage() {
             { label: "Avg cycle", value: `${Math.round(p.cycleLength)}`, unit: "days" },
             {
               label: "Variation",
-              value: p.variance ? `±${p.variance}` : "—",
+              value: p.variance ? `±${p.variance}` : "n/a",
               unit: "days",
             },
             { label: "Cycles logged", value: `${p.observedCycles + (starts.length ? 1 : 0)}`, unit: "total" },

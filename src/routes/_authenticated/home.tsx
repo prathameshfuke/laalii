@@ -23,9 +23,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({
     meta: [
-      { title: "Today — Laali" },
+      { title: "Today: Laali" },
       { name: "description", content: "Where you are in your cycle today, and a place to log it." },
-      { property: "og:title", content: "Today — Laali" },
+      { property: "og:title", content: "Today: Laali" },
       { property: "og:description", content: "Your cycle at a glance." },
       { name: "robots", content: "noindex" },
     ],
@@ -145,7 +145,7 @@ function HomePage() {
               loggedDays={loggedDaysOnRing}
               confidence={p.confidence}
               caption={todayInfo ? `Day ${todayInfo.dayOfCycle}` : "Between cycles"}
-              headline={daysAway != null && daysAway >= 0 ? `${daysAway}` : "—"}
+              headline={daysAway != null && daysAway >= 0 ? `${daysAway}` : "n/a"}
               sub={
                 daysAway != null && daysAway >= 0
                   ? `days until your period${p.variance ? ` · ±${Math.ceil(p.variance)}` : ""}`
