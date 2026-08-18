@@ -3,15 +3,19 @@ import { useMemo } from "react";
 import { AppShell, Section } from "@/components/AppShell";
 import { Mascot } from "@/components/Mascot";
 import {
+  INTIMACY_FLAGS,
   PHASES,
   cycleLengths,
+  daysBetween,
   formatDay,
   fromISO,
   phaseFor,
   predict,
   sortedStarts,
+  today,
+  type CycleRow,
 } from "@/lib/cycle";
-import { useCycles, useLogs, useProfile } from "@/lib/data";
+import { useCycles, useIntimacyLogs, useLogs, useProfile } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({
@@ -193,5 +197,121 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>
+  );
+}
+
+function IntimacySection({
+  rows,
+  opts,
+}: {
+  rows: CycleRow[];
+  opts: { avgCycleLength: number; lutealLength: number };
+}) {
+  const profile = useProfile();
+  const intimacy = useIntimacyLogs();
+  const entries = intimacy.data ?? [];
+  const intent = profile.data?.intent ?? "tracking";
+
+  const desireByPhase = useMemo(() => {
+    const acc: Record<string, { sum: number; n: number }> = {};
+    for (const e of entries) {
+      if (e.desire == null) continue;
+      const info = phaseFor(fromISO(e.log_date), rows, opts);
+      if (!info) continue;
+      acc[info.phase] ??= { sum: 0, n: 0 };
+      acc[info.phase]!.sum += e.desire;
+      acc[info.phase]!.n += 1;
+    }
+    return acc;
+  }, [entries, rows, opts.avgCycleLength, opts.lutealLength]);
+
+  const flags = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const e of entries) {
+      for (const s of e.symptoms) {
+        if ((INTIMACY_FLAGS as readonly string[]).includes(s)) counts[s] = (counts[s] ?? 0) + 1;
+      }
+    }
+    return Object.entries(counts).filter(([, n]) => n >= 2);
+  }, [entries]);
+
+  const lastEntry = entries[0]?.log_date;
+  const daysSince = lastEntry ? daysBetween(fromISO(lastEntry), today()) : null;
+
+  return (
+    <Section title="Intimacy" hint="private to you">
+      <div className="space-y-3">
+        <div className="paper p-5">
+          <p className="text-sm font-semibold">Desire across the month</p>
+          {Object.keys(desireByPhase).length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Log desire a few times and Laali will show how it moves with your phases.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {(Object.keys(PHASES) as Array<keyof typeof PHASES>).map((phase) => {
+                const d = desireByPhase[phase];
+                if (!d) return null;
+                const avg = d.sum / d.n;
+                return (
+                  <div key={phase} className="flex items-center gap-3">
+                    <span className="w-24 text-xs text-muted-foreground">{PHASES[phase].label}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-border">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${(avg / 5) * 100}%`, background: "var(--rose)" }}
+                      />
+                    </div>
+                    <span className="numeral w-8 text-right text-xs">{avg.toFixed(1)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="paper p-5">
+          <p className="text-sm font-semibold">
+            {intent === "conceive"
+              ? "Your fertile window"
+              : intent === "avoid"
+                ? "Days with a higher chance of pregnancy"
+                : "Fertile window"}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {intent === "conceive"
+              ? "Unprotected days you log inside the fertile window are counted here so you can see your timing at a glance."
+              : intent === "avoid"
+                ? "Laali is not contraception. Treat the fertile window as a caution, not a rule, and use protection you trust."
+                : "Switch your goal in Settings and Laali will frame this window for trying to conceive or for avoiding pregnancy."}
+          </p>
+        </div>
+
+        {flags.length ? (
+          <div className="paper p-5">
+            <p className="text-sm font-semibold">Worth mentioning to a clinician</p>
+            <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+              {flags.map(([name, n]) => (
+                <li key={name}>
+                  {name}, logged {n} times.
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">
+              This is a pattern, not a diagnosis. It is worth raising, that is all.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="paper p-5 text-sm text-muted-foreground">
+          {daysSince == null
+            ? "Nothing logged here yet. It is entirely optional."
+            : `Last intimacy entry: ${daysSince === 0 ? "today" : `${daysSince} days ago`}.`}
+          <span className="mt-2 block text-xs">
+            None of this is ever visible in Couples Mode.
+          </span>
+        </div>
+      </div>
+    </Section>
   );
 }
