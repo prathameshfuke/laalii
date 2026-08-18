@@ -19,9 +19,9 @@ import {
 export const Route = createFileRoute("/_authenticated/partner/")({
   head: () => ({
     meta: [
-      { title: "Partner — Laali" },
+      { title: "Partner: Laali" },
       { name: "description", content: "A gentle window into your partner's cycle, only what they share." },
-      { property: "og:title", content: "Partner — Laali" },
+      { property: "og:title", content: "Partner: Laali" },
       { property: "og:description", content: "Support, at the right moment." },
       { name: "robots", content: "noindex" },
     ],
@@ -125,7 +125,7 @@ function PartnerHome() {
       ) : (
         <Section>
           <div className="paper p-5 text-sm text-muted-foreground">
-            She hasn't turned on phase sharing yet — that's completely her call.
+            She hasn't turned on phase sharing yet, and that is completely her call.
           </div>
         </Section>
       )}
@@ -214,7 +214,7 @@ const HELP: Record<keyof typeof PHASES, string[]> = {
     "Lower the bar for plans. Rest is the win.",
   ],
   follicular: [
-    "Energy is climbing — a good week to plan something together.",
+    "Energy is climbing, a good week to plan something together.",
     "Say yes to the spontaneous idea.",
   ],
   ovulation: [

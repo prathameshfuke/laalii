@@ -250,3 +250,22 @@ export function phaseSegments(cycleLength: number, lutealLength: number, periodL
     { phase: "luteal" as Phase, from: ovulationDay + 2, to: cycleLength },
   ].filter((s) => s.to >= s.from);
 }
+
+/** Intimacy is logged separately and is never shared in Couples Mode. */
+export const INTIMACY_ACTIVITIES = [
+  { value: "none", label: "None" },
+  { value: "protected", label: "Protected" },
+  { value: "unprotected", label: "Unprotected" },
+] as const;
+
+export const DESIRE_LABELS = ["Very low", "Low", "Steady", "High", "Very high"] as const;
+
+export const INTIMACY_SYMPTOMS = [
+  "Pain during sex",
+  "Spotting after sex",
+  "Dryness",
+  "Cramping after",
+] as const;
+
+/** The two worth surfacing to a clinician if they keep showing up. */
+export const INTIMACY_FLAGS = ["Pain during sex", "Spotting after sex"] as const;

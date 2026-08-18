@@ -12,8 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Mascot, type MascotState } from "@/components/Mascot";
 import { IconCheck, IconDrop } from "@/components/Icons";
-import { FLOW_LEVELS, MOODS, SYMPTOMS, formatDay, fromISO } from "@/lib/cycle";
-import { useSaveLog, useStartPeriod, type DayLog } from "@/lib/data";
+import {
+  DESIRE_LABELS,
+  FLOW_LEVELS,
+  INTIMACY_ACTIVITIES,
+  INTIMACY_SYMPTOMS,
+  MOODS,
+  SYMPTOMS,
+  formatDay,
+  fromISO,
+} from "@/lib/cycle";
+import {
+  useIntimacyLogs,
+  useSaveIntimacy,
+  useSaveLog,
+  useStartPeriod,
+  type DayLog,
+} from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 function Chip({
@@ -62,9 +77,16 @@ export function LogSheet({
   const [mucus, setMucus] = useState("");
   const [meds, setMeds] = useState("");
   const [startsPeriod, setStartsPeriod] = useState(false);
+  const [showIntimacy, setShowIntimacy] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null);
+  const [desire, setDesire] = useState<number | null>(null);
+  const [intimacySymptoms, setIntimacySymptoms] = useState<string[]>([]);
 
   const saveLog = useSaveLog();
   const startPeriod = useStartPeriod();
+  const intimacyLogs = useIntimacyLogs();
+  const saveIntimacy = useSaveIntimacy();
+  const existingIntimacy = (intimacyLogs.data ?? []).find((i) => i.log_date === date) ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -76,7 +98,11 @@ export function LogSheet({
     setMucus(existing?.mucus ?? "");
     setMeds(existing?.medications ?? "");
     setStartsPeriod(false);
-  }, [open, existing]);
+    setActivity(existingIntimacy?.activity ?? null);
+    setDesire(existingIntimacy?.desire ?? null);
+    setIntimacySymptoms(existingIntimacy?.symptoms ?? []);
+    setShowIntimacy(Boolean(existingIntimacy));
+  }, [open, existing, existingIntimacy]);
 
   const mascotState: MascotState = flow
     ? "comforted"
@@ -101,6 +127,14 @@ export function LogSheet({
         mucus: mucus || null,
         medications: meds.trim() || null,
       });
+      if (activity || desire !== null || intimacySymptoms.length) {
+        await saveIntimacy.mutateAsync({
+          log_date: date,
+          activity: (activity as "none" | "protected" | "unprotected" | null) ?? null,
+          desire,
+          symptoms: intimacySymptoms,
+        });
+      }
       if (startsPeriod) await startPeriod.mutateAsync(date);
       toast.success("Logged", { description: formatDay(fromISO(date)) });
       onOpenChange(false);
@@ -176,6 +210,76 @@ export function LogSheet({
               ))}
             </div>
           </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">Intimacy</p>
+              {!showIntimacy ? (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline underline-offset-4"
+                  onClick={() => setShowIntimacy(true)}
+                >
+                  Add
+                </button>
+              ) : null}
+            </div>
+            {showIntimacy ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {INTIMACY_ACTIVITIES.map((a) => (
+                    <Chip
+                      key={a.value}
+                      active={activity === a.value}
+                      onClick={() => setActivity(activity === a.value ? null : a.value)}
+                    >
+                      {a.label}
+                    </Chip>
+                  ))}
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">Desire</p>
+                  <div className="flex flex-wrap gap-2">
+                    {DESIRE_LABELS.map((label, i) => (
+                      <Chip
+                        key={label}
+                        active={desire === i + 1}
+                        onClick={() => setDesire(desire === i + 1 ? null : i + 1)}
+                      >
+                        {label}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">Anything worth noting</p>
+                  <div className="flex flex-wrap gap-2">
+                    {INTIMACY_SYMPTOMS.map((s) => (
+                      <Chip
+                        key={s}
+                        active={intimacySymptoms.includes(s)}
+                        onClick={() => toggle(intimacySymptoms, setIntimacySymptoms, s)}
+                      >
+                        {s}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Kept private. Intimacy is never shown in Couples Mode, whatever else you share.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Optional, and never shared with a partner.
+              </p>
+            )}
+          </div>
+
+
 
           <div>
             <p className="mb-2 text-sm font-semibold">Note</p>

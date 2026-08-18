@@ -2,15 +2,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { CycleRow } from "@/lib/cycle";
 
+export type UserRole = "primary" | "partner";
+export type Intent = "tracking" | "conceive" | "avoid";
+
 export interface Profile {
   id: string;
   display_name: string | null;
   mascot_name: string;
+  birth_year: number | null;
   avg_cycle_length: number;
   luteal_length: number;
   advanced_tracking: boolean;
   reduce_motion: boolean;
   onboarded: boolean;
+  role: UserRole | null;
+  onboarding_step: string | null;
+  intent: Intent;
 }
 
 export interface DayLog {
@@ -26,6 +33,15 @@ export interface DayLog {
   medications: string | null;
 }
 
+export interface IntimacyLog {
+  id: string;
+  user_id: string;
+  log_date: string;
+  activity: "none" | "protected" | "unprotected" | null;
+  desire: number | null;
+  symptoms: string[];
+}
+
 export interface PartnerLink {
   id: string;
   owner_id: string;
@@ -36,6 +52,7 @@ export interface PartnerLink {
   share_mood: boolean;
   share_symptoms: boolean;
   share_milestones: boolean;
+  share_fertile: boolean;
 }
 
 export interface PartnerNote {
@@ -51,6 +68,35 @@ export async function currentUserId(): Promise<string | null> {
   return data.user?.id ?? null;
 }
 
+/**
+ * The single source of truth for "who is this person and where should they be".
+ * Used both by the route gate and by the UI.
+ */
+export async function fetchProfile(): Promise<Profile | null> {
+  const uid = await currentUserId();
+  if (!uid) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", uid)
+    .maybeSingle();
+  if (error) throw error;
+  if (data) return data as unknown as Profile;
+  const { data: created, error: insertError } = await supabase
+    .from("profiles")
+    .insert({ id: uid })
+    .select("*")
+    .single();
+  if (insertError) throw insertError;
+  return created as unknown as Profile;
+}
+
+export const profileQuery = {
+  queryKey: ["profile"] as const,
+  queryFn: fetchProfile,
+};
+
+
 export function useSessionUser() {
   return useQuery({
     queryKey: ["session-user"],
@@ -59,28 +105,9 @@ export function useSessionUser() {
 }
 
 export function useProfile() {
-  return useQuery({
-    queryKey: ["profile"],
-    queryFn: async (): Promise<Profile | null> => {
-      const uid = await currentUserId();
-      if (!uid) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", uid)
-        .maybeSingle();
-      if (error) throw error;
-      if (data) return data as Profile;
-      const { data: created, error: insertError } = await supabase
-        .from("profiles")
-        .insert({ id: uid })
-        .select("*")
-        .single();
-      if (insertError) throw insertError;
-      return created as Profile;
-    },
-  });
+  return useQuery(profileQuery);
 }
+
 
 export function useUpdateProfile() {
   const qc = useQueryClient();
@@ -229,20 +256,24 @@ export function useLinksToMe() {
 export function useCreateInvite() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (share: {
-      share_phase: boolean;
-      share_mood: boolean;
-      share_symptoms: boolean;
-    }) => {
+    mutationFn: async (share?: Partial<Pick<PartnerLink, "share_phase" | "share_mood" | "share_symptoms" | "share_fertile">>) => {
       const uid = await currentUserId();
       if (!uid) throw new Error("Not signed in");
       const { data, error } = await supabase
         .from("partner_links")
-        .insert({ owner_id: uid, invite_code: makeCode(), ...share })
+        .insert({
+          owner_id: uid,
+          invite_code: makeCode(),
+          share_phase: true,
+          share_mood: false,
+          share_symptoms: false,
+          share_fertile: false,
+          ...share,
+        })
         .select("*")
         .single();
       if (error) throw error;
-      return data as PartnerLink;
+      return data as unknown as PartnerLink;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["links"] }),
   });
@@ -341,4 +372,106 @@ export function useOwnerProfile(ownerId?: string) {
       return data as Partial<Profile> | null;
     },
   });
+}
+
+/* ---------------- intimacy (never shared) ---------------- */
+
+export function useIntimacyLogs() {
+  return useQuery({
+    queryKey: ["intimacy"],
+    queryFn: async (): Promise<IntimacyLog[]> => {
+      const uid = await currentUserId();
+      if (!uid) return [];
+      const { data, error } = await supabase
+        .from("intimacy_logs")
+        .select("*")
+        .eq("user_id", uid)
+        .order("log_date", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as IntimacyLog[];
+    },
+  });
+}
+
+export function useSaveIntimacy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entry: Partial<IntimacyLog> & { log_date: string }) => {
+      const uid = await currentUserId();
+      if (!uid) throw new Error("Not signed in");
+      const { error } = await supabase
+        .from("intimacy_logs")
+        .upsert({ ...entry, user_id: uid }, { onConflict: "user_id,log_date" });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["intimacy"] }),
+  });
+}
+
+/* ---------------- account actions ---------------- */
+
+/** Regenerates the invite code on a link that has not been claimed yet. */
+export function useRegenerateCode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const code = makeCode();
+      const { error } = await supabase
+        .from("partner_links")
+        .update({ invite_code: code })
+        .eq("id", id);
+      if (error) throw error;
+      return code;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["links"] }),
+  });
+}
+
+/** Either side can end the connection. */
+export function useDisconnect() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("partner_links").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["links"] }),
+  });
+}
+
+/**
+ * Clears tracked data (cycles, day logs, intimacy) but keeps the account,
+ * the chosen role and any partner connection intact.
+ */
+export function useDeleteAllData() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const uid = await currentUserId();
+      if (!uid) throw new Error("Not signed in");
+      for (const table of ["day_logs", "intimacy_logs", "cycles"] as const) {
+        const { error } = await supabase.from(table).delete().eq("user_id", uid);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["logs"] });
+      qc.invalidateQueries({ queryKey: ["cycles"] });
+      qc.invalidateQueries({ queryKey: ["intimacy"] });
+    },
+  });
+}
+
+/** Signs out and drops every cached trace of the session from this device. */
+export async function signOutCompletely(qc: ReturnType<typeof useQueryClient>) {
+  await supabase.auth.signOut();
+  qc.clear();
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("laali.")) localStorage.removeItem(key);
+    }
+    sessionStorage.clear();
+  } catch {
+    /* storage can be unavailable, that is fine */
+  }
 }

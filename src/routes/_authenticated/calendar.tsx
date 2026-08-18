@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Laali" },
+      { title: "Calendar: Laali" },
       { name: "description", content: "Your months, coloured by phase, with every logged day." },
-      { property: "og:title", content: "Calendar — Laali" },
+      { property: "og:title", content: "Calendar: Laali" },
       { property: "og:description", content: "Your cycle month by month." },
       { name: "robots", content: "noindex" },
     ],
@@ -148,7 +148,7 @@ function CalendarPage() {
       {p.confidence === "low" ? (
         <Section>
           <p className="text-sm text-muted-foreground">
-            Predictions are still soft — a couple more logged cycles and these edges will firm up.
+            Predictions are still soft. A couple more logged cycles and these edges will firm up.
           </p>
         </Section>
       ) : null}
