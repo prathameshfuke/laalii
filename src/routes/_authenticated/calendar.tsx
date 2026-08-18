@@ -148,7 +148,7 @@ function CalendarPage() {
       {p.confidence === "low" ? (
         <Section>
           <p className="text-sm text-muted-foreground">
-            Predictions are still soft — a couple more logged cycles and these edges will firm up.
+            Predictions are still soft. A couple more logged cycles and these edges will firm up.
           </p>
         </Section>
       ) : null}

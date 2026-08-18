@@ -12,9 +12,9 @@ import { lovable } from "@/integrations/lovable/index";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Laali" },
+      { title: "Sign in: Laali" },
       { name: "description", content: "Sign in or create your Laali account to track your cycle." },
-      { property: "og:title", content: "Sign in — Laali" },
+      { property: "og:title", content: "Sign in: Laali" },
       { property: "og:description", content: "Sign in or create your Laali account." },
       { name: "robots", content: "noindex" },
     ],

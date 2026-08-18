@@ -97,7 +97,7 @@ function LearnPage() {
       <Section>
         <p className="text-xs text-muted-foreground">
           Based on a {Math.round(p.cycleLength)}-day cycle with a {p.lutealLength}-day luteal phase.
-          Laali is not a medical device — see a clinician for anything that worries you.
+          Laali is not a medical device. See a clinician for anything that worries you.
         </p>
       </Section>
     </AppShell>
