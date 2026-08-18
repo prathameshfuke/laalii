@@ -212,6 +212,76 @@ export function LogSheet({
           </div>
 
           <div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">Intimacy</p>
+              {!showIntimacy ? (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline underline-offset-4"
+                  onClick={() => setShowIntimacy(true)}
+                >
+                  Add
+                </button>
+              ) : null}
+            </div>
+            {showIntimacy ? (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {INTIMACY_ACTIVITIES.map((a) => (
+                    <Chip
+                      key={a.value}
+                      active={activity === a.value}
+                      onClick={() => setActivity(activity === a.value ? null : a.value)}
+                    >
+                      {a.label}
+                    </Chip>
+                  ))}
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">Desire</p>
+                  <div className="flex flex-wrap gap-2">
+                    {DESIRE_LABELS.map((label, i) => (
+                      <Chip
+                        key={label}
+                        active={desire === i + 1}
+                        onClick={() => setDesire(desire === i + 1 ? null : i + 1)}
+                      >
+                        {label}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">Anything worth noting</p>
+                  <div className="flex flex-wrap gap-2">
+                    {INTIMACY_SYMPTOMS.map((s) => (
+                      <Chip
+                        key={s}
+                        active={intimacySymptoms.includes(s)}
+                        onClick={() => toggle(intimacySymptoms, setIntimacySymptoms, s)}
+                      >
+                        {s}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Kept private. Intimacy is never shown in Couples Mode, whatever else you share.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Optional, and never shared with a partner.
+              </p>
+            )}
+          </div>
+
+
+
+          <div>
             <p className="mb-2 text-sm font-semibold">Note</p>
             <Textarea
               value={note}
