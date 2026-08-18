@@ -17,6 +17,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPartnerSetupRouteImport } from './routes/_authenticated/partner-setup'
 import { Route as AuthenticatedRoleRouteImport } from './routes/_authenticated/role'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPartnerIndexRouteImport } from './routes/_authenticated/partner/index'
@@ -60,6 +61,12 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPartnerSetupRoute =
+  AuthenticatedPartnerSetupRouteImport.update({
+    id: '/partner-setup',
+    path: '/partner-setup',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRoleRoute = AuthenticatedRoleRouteImport.update({
   id: '/role',
   path: '/role',
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof AuthenticatedInsightsRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/partner/': typeof AuthenticatedPartnerIndexRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
   '/insights': typeof AuthenticatedInsightsRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/partner': typeof AuthenticatedPartnerIndexRoute
@@ -111,6 +120,7 @@ export interface FileRoutesById {
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/_authenticated/role': typeof AuthenticatedRoleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/partner/': typeof AuthenticatedPartnerIndexRoute
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/learn'
     | '/onboarding'
+    | '/partner-setup'
     | '/role'
     | '/settings'
     | '/partner/'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/learn'
     | '/onboarding'
+    | '/partner-setup'
     | '/role'
     | '/settings'
     | '/partner'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
     | '/_authenticated/insights'
     | '/_authenticated/learn'
     | '/_authenticated/onboarding'
+    | '/_authenticated/partner-setup'
     | '/_authenticated/role'
     | '/_authenticated/settings'
     | '/_authenticated/partner/'
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partner-setup': {
+      id: '/_authenticated/partner-setup'
+      path: '/partner-setup'
+      fullPath: '/partner-setup'
+      preLoaderRoute: typeof AuthenticatedPartnerSetupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/role': {
       id: '/_authenticated/role'
       path: '/role'
@@ -249,6 +269,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPartnerSetupRoute: typeof AuthenticatedPartnerSetupRoute
   AuthenticatedRoleRoute: typeof AuthenticatedRoleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedPartnerIndexRoute: typeof AuthenticatedPartnerIndexRoute
@@ -260,6 +281,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPartnerSetupRoute: AuthenticatedPartnerSetupRoute,
   AuthenticatedRoleRoute: AuthenticatedRoleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedPartnerIndexRoute: AuthenticatedPartnerIndexRoute,
