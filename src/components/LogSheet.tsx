@@ -77,9 +77,16 @@ export function LogSheet({
   const [mucus, setMucus] = useState("");
   const [meds, setMeds] = useState("");
   const [startsPeriod, setStartsPeriod] = useState(false);
+  const [showIntimacy, setShowIntimacy] = useState(false);
+  const [activity, setActivity] = useState<string | null>(null);
+  const [desire, setDesire] = useState<number | null>(null);
+  const [intimacySymptoms, setIntimacySymptoms] = useState<string[]>([]);
 
   const saveLog = useSaveLog();
   const startPeriod = useStartPeriod();
+  const intimacyLogs = useIntimacyLogs();
+  const saveIntimacy = useSaveIntimacy();
+  const existingIntimacy = (intimacyLogs.data ?? []).find((i) => i.log_date === date) ?? null;
 
   useEffect(() => {
     if (!open) return;
