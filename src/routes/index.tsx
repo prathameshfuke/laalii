@@ -6,13 +6,13 @@ import { Mascot } from "@/components/Mascot";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Laali — a cycle tracker built for two" },
+      { title: "Laali, a cycle tracker built for two" },
       {
         name: "description",
         content:
           "A calm, private cycle tracker. Track your flow, moods and symptoms, and share exactly as much as you want with your partner.",
       },
-      { property: "og:title", content: "Laali — a cycle tracker built for two" },
+      { property: "og:title", content: "Laali, a cycle tracker built for two" },
       {
         property: "og:description",
         content:
@@ -38,7 +38,7 @@ function Welcome() {
               A cycle tracker built for two
             </p>
             <h1 className="mt-4 text-[2.6rem] leading-[1.05]">
-              Your cycle, kept gently — and shared only as far as you choose.
+              Your cycle, kept gently, and shared only as far as you choose.
             </h1>
             <p className="mt-5 max-w-sm text-base text-muted-foreground">
               Log a day in seconds. See where you are in your cycle at a glance. Invite your partner
