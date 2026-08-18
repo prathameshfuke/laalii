@@ -83,6 +83,39 @@ export type Database = {
         }
         Relationships: []
       }
+      intimacy_logs: {
+        Row: {
+          activity: string | null
+          created_at: string
+          desire: number | null
+          id: string
+          log_date: string
+          symptoms: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: string | null
+          created_at?: string
+          desire?: number | null
+          id?: string
+          log_date: string
+          symptoms?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: string | null
+          created_at?: string
+          desire?: number | null
+          id?: string
+          log_date?: string
+          symptoms?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partner_links: {
         Row: {
           created_at: string
@@ -90,6 +123,7 @@ export type Database = {
           invite_code: string
           owner_id: string
           partner_id: string | null
+          share_fertile: boolean
           share_milestones: boolean
           share_mood: boolean
           share_phase: boolean
@@ -103,6 +137,7 @@ export type Database = {
           invite_code: string
           owner_id: string
           partner_id?: string | null
+          share_fertile?: boolean
           share_milestones?: boolean
           share_mood?: boolean
           share_phase?: boolean
@@ -116,6 +151,7 @@ export type Database = {
           invite_code?: string
           owner_id?: string
           partner_id?: string | null
+          share_fertile?: boolean
           share_milestones?: boolean
           share_mood?: boolean
           share_phase?: boolean
@@ -165,10 +201,13 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          intent: string
           luteal_length: number
           mascot_name: string
           onboarded: boolean
+          onboarding_step: string | null
           reduce_motion: boolean
+          role: string | null
           updated_at: string
         }
         Insert: {
@@ -178,10 +217,13 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          intent?: string
           luteal_length?: number
           mascot_name?: string
           onboarded?: boolean
+          onboarding_step?: string | null
           reduce_motion?: boolean
+          role?: string | null
           updated_at?: string
         }
         Update: {
@@ -191,10 +233,13 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          intent?: string
           luteal_length?: number
           mascot_name?: string
           onboarded?: boolean
+          onboarding_step?: string | null
           reduce_motion?: boolean
+          role?: string | null
           updated_at?: string
         }
         Relationships: []
