@@ -16,9 +16,9 @@ import { useCycles, useLogs, useProfile } from "@/lib/data";
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({
     meta: [
-      { title: "Insights — Laali" },
+      { title: "Insights: Laali" },
       { name: "description", content: "Cycle length trends, symptom patterns and what's coming up." },
-      { property: "og:title", content: "Insights — Laali" },
+      { property: "og:title", content: "Insights: Laali" },
       { property: "og:description", content: "Patterns Laali has noticed in your cycle." },
       { name: "robots", content: "noindex" },
     ],

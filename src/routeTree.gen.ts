@@ -21,6 +21,7 @@ import { Route as AuthenticatedPartnerSetupRouteImport } from './routes/_authent
 import { Route as AuthenticatedRoleRouteImport } from './routes/_authenticated/role'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPartnerIndexRouteImport } from './routes/_authenticated/partner/index'
+import { Route as AuthenticatedPartnerSettingsRouteImport } from './routes/_authenticated/partner/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,6 +84,12 @@ const AuthenticatedPartnerIndexRoute =
     path: '/partner/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPartnerSettingsRoute =
+  AuthenticatedPartnerSettingsRouteImport.update({
+    id: '/partner/settings',
+    path: '/partner/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/partner/': typeof AuthenticatedPartnerIndexRoute
 }
 export interface FileRoutesByTo {
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/partner': typeof AuthenticatedPartnerIndexRoute
 }
 export interface FileRoutesById {
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/_authenticated/role': typeof AuthenticatedRoleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/_authenticated/partner/': typeof AuthenticatedPartnerIndexRoute
 }
 export interface FileRouteTypes {
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/partner-setup'
     | '/role'
     | '/settings'
+    | '/partner/settings'
     | '/partner/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/partner-setup'
     | '/role'
     | '/settings'
+    | '/partner/settings'
     | '/partner'
   id:
     | '__root__'
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/partner-setup'
     | '/_authenticated/role'
     | '/_authenticated/settings'
+    | '/_authenticated/partner/settings'
     | '/_authenticated/partner/'
   fileRoutesById: FileRoutesById
 }
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartnerIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partner/settings': {
+      id: '/_authenticated/partner/settings'
+      path: '/partner/settings'
+      fullPath: '/partner/settings'
+      preLoaderRoute: typeof AuthenticatedPartnerSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -272,6 +292,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPartnerSetupRoute: typeof AuthenticatedPartnerSetupRoute
   AuthenticatedRoleRoute: typeof AuthenticatedRoleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedPartnerSettingsRoute: typeof AuthenticatedPartnerSettingsRoute
   AuthenticatedPartnerIndexRoute: typeof AuthenticatedPartnerIndexRoute
 }
 
@@ -284,6 +305,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPartnerSetupRoute: AuthenticatedPartnerSetupRoute,
   AuthenticatedRoleRoute: AuthenticatedRoleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedPartnerSettingsRoute: AuthenticatedPartnerSettingsRoute,
   AuthenticatedPartnerIndexRoute: AuthenticatedPartnerIndexRoute,
 }
 
