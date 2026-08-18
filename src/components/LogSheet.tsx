@@ -12,8 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Mascot, type MascotState } from "@/components/Mascot";
 import { IconCheck, IconDrop } from "@/components/Icons";
-import { FLOW_LEVELS, MOODS, SYMPTOMS, formatDay, fromISO } from "@/lib/cycle";
-import { useSaveLog, useStartPeriod, type DayLog } from "@/lib/data";
+import {
+  DESIRE_LABELS,
+  FLOW_LEVELS,
+  INTIMACY_ACTIVITIES,
+  INTIMACY_SYMPTOMS,
+  MOODS,
+  SYMPTOMS,
+  formatDay,
+  fromISO,
+} from "@/lib/cycle";
+import {
+  useIntimacyLogs,
+  useSaveIntimacy,
+  useSaveLog,
+  useStartPeriod,
+  type DayLog,
+} from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 function Chip({
