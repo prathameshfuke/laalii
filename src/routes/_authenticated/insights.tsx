@@ -159,6 +159,10 @@ function InsightsPage() {
         )}
       </Section>
 
+      <IntimacySection rows={rows} opts={opts} />
+
+
+
       <Section title="Coming up">
         <div className="paper space-y-3 p-5 text-sm">
           {p.nextStart ? (
