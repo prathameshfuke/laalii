@@ -257,6 +257,7 @@ export type Database = {
         Args: { _category: string; _owner: string; _viewer: string }
         Returns: boolean
       }
+      redeem_invite: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
