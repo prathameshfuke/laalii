@@ -14,6 +14,9 @@ import { destinationFor } from "@/lib/routing";
 
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { role?: "partner" } =>
+    search["role"] === "partner" ? { role: "partner" } : {},
+
   head: () => ({
     meta: [
       { title: "Sign in: Laali" },
@@ -29,6 +32,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { role: intendedRole } = Route.useSearch();
+  const partnerFlow = intendedRole === "partner";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,10 +44,24 @@ function AuthPage() {
   /**
    * One place decides where a signed-in person lands, so role selection is
    * always the first stop for a brand new account and never reappears later.
+   * Arriving through the partner entry presets the role, so a supporter never
+   * has to answer the role question.
    */
   async function land() {
     qc.removeQueries({ queryKey: profileQuery.queryKey });
-    const profile = await qc.ensureQueryData(profileQuery);
+    let profile = await qc.ensureQueryData(profileQuery);
+    if (partnerFlow && profile && !profile.role) {
+      const { data } = await supabase
+        .from("profiles")
+        .update({ role: "partner", onboarding_step: "basics" })
+        .eq("id", profile.id)
+        .select()
+        .maybeSingle();
+      if (data) {
+        profile = data as typeof profile;
+        qc.setQueryData(profileQuery.queryKey, profile);
+      }
+    }
     navigate({ to: destinationFor(profile), replace: true });
   }
 
@@ -52,6 +71,7 @@ function AuthPage() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

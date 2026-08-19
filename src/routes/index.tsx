@@ -87,14 +87,22 @@ function Welcome() {
             </Link>
             <Link
               to="/auth"
+              search={{ role: "partner" }}
               className="flex w-full items-center justify-center rounded-full border border-border bg-card py-3.5 text-base font-semibold"
+            >
+              I am the partner
+            </Link>
+            <Link
+              to="/auth"
+              className="flex w-full items-center justify-center py-2 text-sm text-muted-foreground underline underline-offset-4"
             >
               I already have an account
             </Link>
-            <p className="pt-2 text-center text-xs text-muted-foreground">
-              Partner invited you? Sign in and enter your code.
+            <p className="pt-1 text-center text-xs text-muted-foreground">
+              Partners sign in here too, then enter the code they were given.
             </p>
           </div>
+
         </div>
       </div>
     </div>
