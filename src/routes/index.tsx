@@ -30,7 +30,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Welcome() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  // Landing stays one screen for everyone. Anyone already signed in (including
+  // a Google redirect back to the origin) is sent on to wherever they belong.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session || cancelled) return;
+      const profile = await qc.ensureQueryData(profileQuery);
+      if (!cancelled) navigate({ to: destinationFor(profile), replace: true });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, qc]);
+
   return (
+
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-6 py-10">
         <header className="flex items-center gap-2">
