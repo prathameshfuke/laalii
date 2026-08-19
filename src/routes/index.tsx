@@ -1,7 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import logo from "@/assets/logo.png.asset.json";
 import icon from "@/assets/icon.png.asset.json";
 import { Mascot } from "@/components/Mascot";
+import { supabase } from "@/integrations/supabase/client";
+import { profileQuery } from "@/lib/data";
+import { destinationFor } from "@/lib/routing";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
