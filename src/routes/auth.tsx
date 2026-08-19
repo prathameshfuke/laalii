@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { profileQuery } from "@/lib/data";
+import { destinationFor } from "@/lib/routing";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -24,6 +28,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,11 +36,22 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
+  /**
+   * One place decides where a signed-in person lands, so role selection is
+   * always the first stop for a brand new account and never reappears later.
+   */
+  async function land() {
+    qc.removeQueries({ queryKey: profileQuery.queryKey });
+    const profile = await qc.ensureQueryData(profileQuery);
+    navigate({ to: destinationFor(profile), replace: true });
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/home", replace: true });
+      if (data.session) void land();
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,7 +75,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/home", replace: true });
+      await land();
     } catch (error) {
       toast.error("That didn't work", {
         description: error instanceof Error ? error.message : "Please try again.",
@@ -78,8 +94,9 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/home", replace: true });
+    await land();
   }
+
 
   if (sent) {
     return (
