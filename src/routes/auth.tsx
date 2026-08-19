@@ -14,9 +14,9 @@ import { destinationFor } from "@/lib/routing";
 
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    role: search.role === "partner" ? ("partner" as const) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { role?: "partner" } =>
+    search["role"] === "partner" ? { role: "partner" } : {},
+
   head: () => ({
     meta: [
       { title: "Sign in: Laali" },
