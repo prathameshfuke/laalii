@@ -307,24 +307,16 @@ export function useAcceptInvite() {
     mutationFn: async (code: string) => {
       const uid = await currentUserId();
       if (!uid) throw new Error("Not signed in");
-      const { data: found, error: findError } = await supabase
-        .from("partner_links")
-        .select("id, status, partner_id")
-        .eq("invite_code", code.trim().toUpperCase())
-        .maybeSingle();
-      if (findError) throw findError;
-      if (!found) throw new Error("That invite code doesn't match anything.");
-      if (found.partner_id) throw new Error("That invite has already been used.");
-      const { error } = await supabase
-        .from("partner_links")
-        .update({ partner_id: uid, status: "accepted" })
-        .eq("id", found.id);
-      if (error) throw error;
-      return found.id;
+      const { data, error } = await supabase.rpc("redeem_invite", {
+        _code: code.trim().toUpperCase(),
+      });
+      if (error) throw new Error(error.message.replace(/^.*?:\s*/, ""));
+      return data as unknown as string;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["links"] }),
   });
 }
+
 
 export function usePartnerNotes(linkId?: string) {
   return useQuery({
