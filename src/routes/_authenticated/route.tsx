@@ -7,7 +7,7 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ context, location }) => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) throw redirect({ to: "/auth", search: {} });
 
     const profile = await context.queryClient.ensureQueryData(profileQuery);
     const target = guard(profile, location.pathname);
