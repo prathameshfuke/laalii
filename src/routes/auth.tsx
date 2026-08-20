@@ -139,12 +139,20 @@ function AuthPage() {
           <img src={logo.url} alt="Laali" className="h-8 w-auto" />
         </Link>
         <Mascot state="neutral" size={110} className="mx-auto mt-6" bob />
-        <h1 className="mt-5 text-center text-2xl">
-          {mode === "signin" ? "Welcome back" : "Let's begin"}
+        {partnerFlow ? (
+          <p className="mt-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Partner sign in
+          </p>
+        ) : null}
+        <h1 className="mt-3 text-center text-2xl">
+          {mode === "signin" ? "Welcome back" : partnerFlow ? "Set up your partner account" : "Let's begin"}
         </h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          Your cycle data is private to your account.
+          {partnerFlow
+            ? "Create your own account, then enter the code your partner shared with you."
+            : "Your cycle data is private to your account."}
         </p>
+
 
         <form onSubmit={submit} className="mt-8 space-y-4">
           {mode === "signup" ? (
