@@ -49,6 +49,7 @@ export type Database = {
           moods: string[]
           mucus: string | null
           note: string | null
+          symptom_severity: Json
           symptoms: string[]
           updated_at: string
           user_id: string
@@ -63,6 +64,7 @@ export type Database = {
           moods?: string[]
           mucus?: string | null
           note?: string | null
+          symptom_severity?: Json
           symptoms?: string[]
           updated_at?: string
           user_id: string
@@ -77,6 +79,7 @@ export type Database = {
           moods?: string[]
           mucus?: string | null
           note?: string | null
+          symptom_severity?: Json
           symptoms?: string[]
           updated_at?: string
           user_id?: string
@@ -198,6 +201,7 @@ export type Database = {
           advanced_tracking: boolean
           avg_cycle_length: number
           birth_year: number | null
+          care_dismissed_cycle: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -214,6 +218,7 @@ export type Database = {
           advanced_tracking?: boolean
           avg_cycle_length?: number
           birth_year?: number | null
+          care_dismissed_cycle?: string | null
           created_at?: string
           display_name?: string | null
           id: string
@@ -230,6 +235,7 @@ export type Database = {
           advanced_tracking?: boolean
           avg_cycle_length?: number
           birth_year?: number | null
+          care_dismissed_cycle?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
