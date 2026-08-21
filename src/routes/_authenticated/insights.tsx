@@ -15,7 +15,9 @@ import {
   today,
   type CycleRow,
 } from "@/lib/cycle";
+import { pmsWindow, severityTrends } from "@/lib/insights";
 import { useCycles, useIntimacyLogs, useLogs, useProfile } from "@/lib/data";
+
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({
@@ -65,6 +67,9 @@ function InsightsPage() {
 
   const max = lengths.length ? Math.max(...lengths) : 30;
   const min = lengths.length ? Math.min(...lengths) : 26;
+  const pms = pmsWindow(logs.data ?? [], rows, p.nextStart);
+  const trends = severityTrends(logs.data ?? [], rows);
+
 
   return (
     <AppShell variant="her">
@@ -76,13 +81,21 @@ function InsightsPage() {
       <Section>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "Avg cycle", value: `${Math.round(p.cycleLength)}`, unit: "days" },
+            {
+              label: "Avg cycle",
+              value: p.observedCycles ? `${Math.round(p.cycleLength)}` : "n/a",
+              unit: p.observedCycles ? "days" : "not enough yet",
+            },
             {
               label: "Variation",
-              value: p.variance ? `±${p.variance}` : "n/a",
-              unit: "days",
+              value: p.observedCycles >= 2 && p.variance ? `±${p.variance}` : "n/a",
+              unit: p.observedCycles >= 2 ? "days" : "not enough yet",
             },
-            { label: "Cycles logged", value: `${p.observedCycles + (starts.length ? 1 : 0)}`, unit: "total" },
+            {
+              label: "Cycles logged",
+              value: `${starts.length}`,
+              unit: "total",
+            },
           ].map((s) => (
             <div key={s.label} className="paper p-4 text-center">
               <p className="numeral text-2xl">{s.value}</p>
@@ -94,6 +107,7 @@ function InsightsPage() {
           ))}
         </div>
       </Section>
+
 
       <Section title="Cycle length over time">
         {lengths.length < 2 ? (
@@ -163,7 +177,62 @@ function InsightsPage() {
         )}
       </Section>
 
+      <Section title="Before your period">
+        {pms ? (
+          <div className="paper p-5">
+            <p className="text-sm">
+              Symptoms have tended to start about {pms.typicalLead}{" "}
+              {pms.typicalLead === 1 ? "day" : "days"} before your period, across{" "}
+              {pms.cyclesSeen} cycles.
+            </p>
+            {pms.from && pms.to ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                If that holds, the next stretch to watch is roughly {formatDay(pms.from)} to{" "}
+                {formatDay(pms.to)}.
+              </p>
+            ) : null}
+            <p className="mt-2 text-xs text-muted-foreground">
+              A pattern, not a promise. Bodies move around.
+            </p>
+          </div>
+        ) : (
+          <div className="paper p-5 text-sm text-muted-foreground">
+            Once you have logged symptoms in the run up to two periods, Laali can say when yours
+            tend to start.
+          </div>
+        )}
+      </Section>
+
+      <Section title="Severity over time">
+        {trends.length ? (
+          <div className="space-y-3">
+            {trends.map((t) => (
+              <div key={t.symptom} className="paper p-5">
+                <p className="text-sm font-semibold">{t.symptom}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t.direction === "harder"
+                    ? `Rated stronger in your recent cycles than earlier ones (${t.earlier.toFixed(1)} to ${t.recent.toFixed(1)} out of 3).`
+                    : t.direction === "easier"
+                      ? `Rated milder lately than earlier on (${t.earlier.toFixed(1)} to ${t.recent.toFixed(1)} out of 3).`
+                      : `Holding steady around ${t.recent.toFixed(1)} out of 3.`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Based on {t.cyclesSeen} cycles where you rated it.
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="paper p-5 text-sm text-muted-foreground">
+            Rate how strong a symptom felt when you log it, mild, moderate or strong, and after
+            three cycles Laali can show whether it is easing or building.
+          </div>
+        )}
+      </Section>
+
       <IntimacySection rows={rows} opts={opts} />
+
+
 
 
 

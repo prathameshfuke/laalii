@@ -21,9 +21,10 @@ const HER_NAV = [
 
 const HIS_NAV = [
   { to: "/partner", label: "Today", Icon: IconHeart },
-  
+  { to: "/partner/insights", label: "Insights", Icon: IconSpark },
   { to: "/partner/settings", label: "Account", Icon: IconGear },
 ];
+
 
 export function AppShell({
   children,

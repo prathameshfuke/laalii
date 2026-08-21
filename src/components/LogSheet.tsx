@@ -22,7 +22,9 @@ import {
   formatDay,
   fromISO,
 } from "@/lib/cycle";
+import { SEVERITY_LABELS } from "@/lib/insights";
 import {
+
   useIntimacyLogs,
   useSaveIntimacy,
   useSaveLog,
@@ -71,6 +73,8 @@ export function LogSheet({
 }) {
   const [flow, setFlow] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [severity, setSeverity] = useState<Record<string, number>>({});
+
   const [moods, setMoods] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [bbt, setBbt] = useState("");
@@ -92,6 +96,8 @@ export function LogSheet({
     if (!open) return;
     setFlow(existing?.flow ?? null);
     setSymptoms(existing?.symptoms ?? []);
+    setSeverity(existing?.symptom_severity ?? {});
+
     setMoods(existing?.moods ?? []);
     setNote(existing?.note ?? "");
     setBbt(existing?.bbt != null ? String(existing.bbt) : "");
@@ -126,7 +132,11 @@ export function LogSheet({
         bbt: bbt ? Number(bbt) : null,
         mucus: mucus || null,
         medications: meds.trim() || null,
+        symptom_severity: Object.fromEntries(
+          Object.entries(severity).filter(([name]) => symptoms.includes(name)),
+        ),
       });
+
       if (activity || desire !== null || intimacySymptoms.length) {
         await saveIntimacy.mutateAsync({
           log_date: date,
@@ -198,7 +208,44 @@ export function LogSheet({
                 </Chip>
               ))}
             </div>
+            {symptoms.length ? (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  How strong was it? Optional, and it is what lets Laali show a trend later.
+                </p>
+                {symptoms.map((s) => (
+                  <div key={s} className="flex items-center justify-between gap-3">
+                    <span className="text-sm">{s}</span>
+                    <div className="flex gap-1.5">
+                      {SEVERITY_LABELS.map((label, i) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() =>
+                            setSeverity((prev) => {
+                              const next = { ...prev };
+                              if (next[s] === i + 1) delete next[s];
+                              else next[s] = i + 1;
+                              return next;
+                            })
+                          }
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-xs transition-all",
+                            severity[s] === i + 1
+                              ? "border-foreground/70 bg-primary/30 text-foreground"
+                              : "border-border bg-card text-muted-foreground",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
+
 
           <div>
             <p className="mb-2 text-sm font-semibold">Mood</p>
