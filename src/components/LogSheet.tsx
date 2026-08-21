@@ -202,7 +202,44 @@ export function LogSheet({
                 </Chip>
               ))}
             </div>
+            {symptoms.length ? (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  How strong was it? Optional, and it is what lets Laali show a trend later.
+                </p>
+                {symptoms.map((s) => (
+                  <div key={s} className="flex items-center justify-between gap-3">
+                    <span className="text-sm">{s}</span>
+                    <div className="flex gap-1.5">
+                      {SEVERITY_LABELS.map((label, i) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() =>
+                            setSeverity((prev) => {
+                              const next = { ...prev };
+                              if (next[s] === i + 1) delete next[s];
+                              else next[s] = i + 1;
+                              return next;
+                            })
+                          }
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-xs transition-all",
+                            severity[s] === i + 1
+                              ? "border-foreground/70 bg-primary/30 text-foreground"
+                              : "border-border bg-card text-muted-foreground",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
+
 
           <div>
             <p className="mb-2 text-sm font-semibold">Mood</p>
