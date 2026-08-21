@@ -21,6 +21,10 @@ import {
 import {
   signOutCompletely,
   useCreateInvite,
+  useCycles,
+  useIntimacyLogs,
+  useLogs,
+
   useDeleteAllData,
   useDisconnect,
   useMyLinks,
