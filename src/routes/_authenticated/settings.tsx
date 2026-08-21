@@ -253,10 +253,25 @@ function SettingsPage() {
 
       <Section title="Your data">
         <div className="paper space-y-4 p-5">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: "Days logged", value: (logs.data ?? []).length },
+              { label: "Cycles recorded", value: (cycles.data ?? []).length },
+              { label: "Private entries", value: (intimacy.data ?? []).length },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="numeral text-2xl">{s.value}</p>
+                <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                  {s.label}
+                </p>
+              </div>
+            ))}
+          </div>
           <p className="text-sm text-muted-foreground">
             Deleting your data clears every cycle, day log and intimacy entry from this account. Your
             sign in and any partner connection stay as they are.
           </p>
+
           <Confirm
             trigger={
               <button className="text-sm text-destructive underline underline-offset-4">
