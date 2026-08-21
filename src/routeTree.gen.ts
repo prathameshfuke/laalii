@@ -21,6 +21,7 @@ import { Route as AuthenticatedPartnerSetupRouteImport } from './routes/_authent
 import { Route as AuthenticatedRoleRouteImport } from './routes/_authenticated/role'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPartnerIndexRouteImport } from './routes/_authenticated/partner/index'
+import { Route as AuthenticatedPartnerInsightsRouteImport } from './routes/_authenticated/partner/insights'
 import { Route as AuthenticatedPartnerSettingsRouteImport } from './routes/_authenticated/partner/settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -84,6 +85,12 @@ const AuthenticatedPartnerIndexRoute =
     path: '/partner/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPartnerInsightsRoute =
+  AuthenticatedPartnerInsightsRouteImport.update({
+    id: '/partner/insights',
+    path: '/partner/insights',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPartnerSettingsRoute =
   AuthenticatedPartnerSettingsRouteImport.update({
     id: '/partner/settings',
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/partner/insights': typeof AuthenticatedPartnerInsightsRoute
   '/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/partner/': typeof AuthenticatedPartnerIndexRoute
 }
@@ -116,6 +124,7 @@ export interface FileRoutesByTo {
   '/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/role': typeof AuthenticatedRoleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/partner/insights': typeof AuthenticatedPartnerInsightsRoute
   '/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/partner': typeof AuthenticatedPartnerIndexRoute
 }
@@ -132,6 +141,7 @@ export interface FileRoutesById {
   '/_authenticated/partner-setup': typeof AuthenticatedPartnerSetupRoute
   '/_authenticated/role': typeof AuthenticatedRoleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/partner/insights': typeof AuthenticatedPartnerInsightsRoute
   '/_authenticated/partner/settings': typeof AuthenticatedPartnerSettingsRoute
   '/_authenticated/partner/': typeof AuthenticatedPartnerIndexRoute
 }
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/partner-setup'
     | '/role'
     | '/settings'
+    | '/partner/insights'
     | '/partner/settings'
     | '/partner/'
   fileRoutesByTo: FileRoutesByTo
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/partner-setup'
     | '/role'
     | '/settings'
+    | '/partner/insights'
     | '/partner/settings'
     | '/partner'
   id:
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/partner-setup'
     | '/_authenticated/role'
     | '/_authenticated/settings'
+    | '/_authenticated/partner/insights'
     | '/_authenticated/partner/settings'
     | '/_authenticated/partner/'
   fileRoutesById: FileRoutesById
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartnerIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partner/insights': {
+      id: '/_authenticated/partner/insights'
+      path: '/partner/insights'
+      fullPath: '/partner/insights'
+      preLoaderRoute: typeof AuthenticatedPartnerInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/partner/settings': {
       id: '/_authenticated/partner/settings'
       path: '/partner/settings'
@@ -292,6 +312,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPartnerSetupRoute: typeof AuthenticatedPartnerSetupRoute
   AuthenticatedRoleRoute: typeof AuthenticatedRoleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedPartnerInsightsRoute: typeof AuthenticatedPartnerInsightsRoute
   AuthenticatedPartnerSettingsRoute: typeof AuthenticatedPartnerSettingsRoute
   AuthenticatedPartnerIndexRoute: typeof AuthenticatedPartnerIndexRoute
 }
@@ -305,6 +326,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPartnerSetupRoute: AuthenticatedPartnerSetupRoute,
   AuthenticatedRoleRoute: AuthenticatedRoleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedPartnerInsightsRoute: AuthenticatedPartnerInsightsRoute,
   AuthenticatedPartnerSettingsRoute: AuthenticatedPartnerSettingsRoute,
   AuthenticatedPartnerIndexRoute: AuthenticatedPartnerIndexRoute,
 }

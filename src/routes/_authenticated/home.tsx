@@ -17,7 +17,9 @@ import {
   toISO,
   today,
 } from "@/lib/cycle";
-import { useCycles, useLogs, useProfile } from "@/lib/data";
+import { careNoteFor } from "@/lib/insights";
+import { useCycles, useLogs, useProfile, useUpdateProfile } from "@/lib/data";
+
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -36,6 +38,8 @@ export const Route = createFileRoute("/_authenticated/home")({
 function HomePage() {
   const navigate = useNavigate();
   const profile = useProfile();
+  const updateProfile = useUpdateProfile();
+
   const cycles = useCycles();
   const logs = useLogs();
   const [selected, setSelected] = useState(toISO(today()));
@@ -78,6 +82,11 @@ function HomePage() {
 
   const phase = info?.phase ?? null;
   const daysAway = p.nextStart ? daysBetween(today(), p.nextStart) : null;
+  const careNote = careNoteFor(
+    todayInfo?.phase ?? null,
+    p.lastStart ? toISO(p.lastStart) : "none",
+  );
+
 
   return (
     <AppShell variant="her">
@@ -185,6 +194,26 @@ function HomePage() {
           </div>
         </div>
       </Section>
+
+      {careNote && p.lastStart && profile.data?.care_dismissed_cycle !== toISO(p.lastStart) ? (
+        <Section>
+          <div className="paper p-5">
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+              A small idea
+            </p>
+            <p className="mt-2 text-sm">{careNote.text}</p>
+            <button
+              className="mt-3 text-xs text-muted-foreground underline underline-offset-4"
+              onClick={() =>
+                updateProfile.mutate({ care_dismissed_cycle: toISO(p.lastStart!) })
+              }
+            >
+              Not this cycle, thanks
+            </button>
+          </div>
+        </Section>
+      ) : null}
+
 
       {selectedLog ? (
         <Section title={formatDay(fromISO(selected))} hint="tap to edit">
