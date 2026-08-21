@@ -15,7 +15,9 @@ import {
   today,
   type CycleRow,
 } from "@/lib/cycle";
+import { pmsWindow, severityTrends } from "@/lib/insights";
 import { useCycles, useIntimacyLogs, useLogs, useProfile } from "@/lib/data";
+
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({
@@ -65,6 +67,9 @@ function InsightsPage() {
 
   const max = lengths.length ? Math.max(...lengths) : 30;
   const min = lengths.length ? Math.min(...lengths) : 26;
+  const pms = pmsWindow(logs.data ?? [], rows, p.nextStart);
+  const trends = severityTrends(logs.data ?? [], rows);
+
 
   return (
     <AppShell variant="her">
