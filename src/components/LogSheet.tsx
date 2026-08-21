@@ -71,6 +71,8 @@ export function LogSheet({
 }) {
   const [flow, setFlow] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [severity, setSeverity] = useState<Record<string, number>>({});
+
   const [moods, setMoods] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [bbt, setBbt] = useState("");
