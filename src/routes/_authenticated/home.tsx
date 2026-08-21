@@ -17,7 +17,9 @@ import {
   toISO,
   today,
 } from "@/lib/cycle";
-import { useCycles, useLogs, useProfile } from "@/lib/data";
+import { careNoteFor } from "@/lib/insights";
+import { useCycles, useLogs, useProfile, useUpdateProfile } from "@/lib/data";
+
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -78,6 +80,11 @@ function HomePage() {
 
   const phase = info?.phase ?? null;
   const daysAway = p.nextStart ? daysBetween(today(), p.nextStart) : null;
+  const careNote = careNoteFor(
+    todayInfo?.phase ?? null,
+    p.lastStart ? toISO(p.lastStart) : "none",
+  );
+
 
   return (
     <AppShell variant="her">
