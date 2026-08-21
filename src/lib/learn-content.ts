@@ -25,11 +25,15 @@ export const PHASE_DETAIL: Record<Phase, string[]> = {
   ],
 };
 
-export function phaseCards(currentPhase?: Phase | null): DeckCard[] {
+export function phaseCards(
+  currentPhase?: Phase | null,
+  hereLabel = "Where she is today",
+): DeckCard[] {
   return (Object.keys(PHASES) as Phase[]).map((phase) => ({
     id: phase,
     title: PHASES[phase].label,
-    ...(currentPhase === phase ? { eyebrow: "Where she is today" } : {}),
+    ...(currentPhase === phase ? { eyebrow: hereLabel } : {}),
+
     body: PHASES[phase].blurb,
     points: PHASE_DETAIL[phase],
     mascot: phaseMascot[phase],
