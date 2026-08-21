@@ -18,6 +18,7 @@ export interface Profile {
   role: UserRole | null;
   onboarding_step: string | null;
   intent: Intent;
+  care_dismissed_cycle: string | null;
 }
 
 export interface DayLog {
@@ -31,7 +32,9 @@ export interface DayLog {
   bbt: number | null;
   mucus: string | null;
   medications: string | null;
+  symptom_severity: Record<string, number>;
 }
+
 
 export interface IntimacyLog {
   id: string;
