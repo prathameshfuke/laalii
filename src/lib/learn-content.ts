@@ -29,7 +29,7 @@ export function phaseCards(currentPhase?: Phase | null): DeckCard[] {
   return (Object.keys(PHASES) as Phase[]).map((phase) => ({
     id: phase,
     title: PHASES[phase].label,
-    eyebrow: currentPhase === phase ? "Where she is today" : undefined,
+    ...(currentPhase === phase ? { eyebrow: "Where she is today" } : {}),
     body: PHASES[phase].blurb,
     points: PHASE_DETAIL[phase],
     mascot: phaseMascot[phase],
@@ -37,6 +37,7 @@ export function phaseCards(currentPhase?: Phase | null): DeckCard[] {
     accent: PHASES[phase].color,
   }));
 }
+
 
 /**
  * General education for the partner. None of this depends on her data, so it
