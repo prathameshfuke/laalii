@@ -38,6 +38,8 @@ export const Route = createFileRoute("/_authenticated/home")({
 function HomePage() {
   const navigate = useNavigate();
   const profile = useProfile();
+  const updateProfile = useUpdateProfile();
+
   const cycles = useCycles();
   const logs = useLogs();
   const [selected, setSelected] = useState(toISO(today()));
