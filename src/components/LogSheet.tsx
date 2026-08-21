@@ -94,6 +94,8 @@ export function LogSheet({
     if (!open) return;
     setFlow(existing?.flow ?? null);
     setSymptoms(existing?.symptoms ?? []);
+    setSeverity(existing?.symptom_severity ?? {});
+
     setMoods(existing?.moods ?? []);
     setNote(existing?.note ?? "");
     setBbt(existing?.bbt != null ? String(existing.bbt) : "");
