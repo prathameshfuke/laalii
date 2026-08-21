@@ -22,7 +22,9 @@ import {
   formatDay,
   fromISO,
 } from "@/lib/cycle";
+import { SEVERITY_LABELS } from "@/lib/insights";
 import {
+
   useIntimacyLogs,
   useSaveIntimacy,
   useSaveLog,
