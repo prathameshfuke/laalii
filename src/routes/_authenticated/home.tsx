@@ -186,6 +186,26 @@ function HomePage() {
         </div>
       </Section>
 
+      {careNote && p.lastStart && profile.data?.care_dismissed_cycle !== toISO(p.lastStart) ? (
+        <Section>
+          <div className="paper p-5">
+            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+              A small idea
+            </p>
+            <p className="mt-2 text-sm">{careNote.text}</p>
+            <button
+              className="mt-3 text-xs text-muted-foreground underline underline-offset-4"
+              onClick={() =>
+                updateProfile.mutate({ care_dismissed_cycle: toISO(p.lastStart!) })
+              }
+            >
+              Not this cycle, thanks
+            </button>
+          </div>
+        </Section>
+      ) : null}
+
+
       {selectedLog ? (
         <Section title={formatDay(fromISO(selected))} hint="tap to edit">
           <button
