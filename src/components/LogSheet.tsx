@@ -132,7 +132,11 @@ export function LogSheet({
         bbt: bbt ? Number(bbt) : null,
         mucus: mucus || null,
         medications: meds.trim() || null,
+        symptom_severity: Object.fromEntries(
+          Object.entries(severity).filter(([name]) => symptoms.includes(name)),
+        ),
       });
+
       if (activity || desire !== null || intimacySymptoms.length) {
         await saveIntimacy.mutateAsync({
           log_date: date,
