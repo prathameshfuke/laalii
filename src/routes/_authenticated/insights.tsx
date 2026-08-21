@@ -76,13 +76,21 @@ function InsightsPage() {
       <Section>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "Avg cycle", value: `${Math.round(p.cycleLength)}`, unit: "days" },
+            {
+              label: "Avg cycle",
+              value: p.observedCycles ? `${Math.round(p.cycleLength)}` : "n/a",
+              unit: p.observedCycles ? "days" : "not enough yet",
+            },
             {
               label: "Variation",
-              value: p.variance ? `±${p.variance}` : "n/a",
-              unit: "days",
+              value: p.observedCycles >= 2 && p.variance ? `±${p.variance}` : "n/a",
+              unit: p.observedCycles >= 2 ? "days" : "not enough yet",
             },
-            { label: "Cycles logged", value: `${p.observedCycles + (starts.length ? 1 : 0)}`, unit: "total" },
+            {
+              label: "Cycles logged",
+              value: `${starts.length}`,
+              unit: "total",
+            },
           ].map((s) => (
             <div key={s.label} className="paper p-4 text-center">
               <p className="numeral text-2xl">{s.value}</p>
@@ -94,6 +102,7 @@ function InsightsPage() {
           ))}
         </div>
       </Section>
+
 
       <Section title="Cycle length over time">
         {lengths.length < 2 ? (
