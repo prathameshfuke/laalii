@@ -10,7 +10,7 @@ import {
   useAcceptInvite,
   useCycles,
   useLinksToMe,
-  useLogs,
+  usePartnerLogs,
   useOwnerProfile,
   usePartnerNotes,
   useSendNote,
@@ -37,7 +37,7 @@ function PartnerHome() {
   const link = (links.data ?? [])[0] ?? null;
   const owner = useOwnerProfile(link?.owner_id);
   const cycles = useCycles(link?.owner_id);
-  const logs = useLogs(link?.owner_id);
+  const logs = usePartnerLogs(link?.owner_id, !!link?.share_mood || !!link?.share_symptoms);
   const notes = usePartnerNotes(link?.id);
   const sendNote = useSendNote();
   const [draft, setDraft] = useState("");
