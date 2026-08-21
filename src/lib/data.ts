@@ -159,6 +159,33 @@ export function useLogs(userId?: string) {
   });
 }
 
+export interface SharedLog {
+  log_date: string;
+  symptoms: string[];
+  moods: string[];
+}
+
+/**
+ * The partner's read of her day logs. Only the two categories that can ever
+ * be shared are requested, so private notes never leave the database.
+ */
+export function usePartnerLogs(ownerId: string | undefined, allowed: boolean) {
+  return useQuery({
+    enabled: !!ownerId && allowed,
+    queryKey: ["partner-logs", ownerId],
+    queryFn: async (): Promise<SharedLog[]> => {
+      const { data, error } = await supabase
+        .from("day_logs")
+        .select("log_date, symptoms, moods")
+        .eq("user_id", ownerId!)
+        .order("log_date", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as SharedLog[];
+    },
+  });
+}
+
+
 export function useSaveLog() {
   const qc = useQueryClient();
   return useMutation({
