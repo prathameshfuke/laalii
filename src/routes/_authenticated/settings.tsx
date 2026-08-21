@@ -64,6 +64,10 @@ function SettingsPage() {
   const regenerate = useRegenerateCode();
   const disconnect = useDisconnect();
   const deleteData = useDeleteAllData();
+  const logs = useLogs();
+  const cycles = useCycles();
+  const intimacy = useIntimacyLogs();
+
   const [name, setName] = useState<string | null>(null);
 
   const link = (links.data ?? [])[0] ?? null;
