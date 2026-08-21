@@ -172,7 +172,62 @@ function InsightsPage() {
         )}
       </Section>
 
+      <Section title="Before your period">
+        {pms ? (
+          <div className="paper p-5">
+            <p className="text-sm">
+              Symptoms have tended to start about {pms.typicalLead}{" "}
+              {pms.typicalLead === 1 ? "day" : "days"} before your period, across{" "}
+              {pms.cyclesSeen} cycles.
+            </p>
+            {pms.from && pms.to ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                If that holds, the next stretch to watch is roughly {formatDay(pms.from)} to{" "}
+                {formatDay(pms.to)}.
+              </p>
+            ) : null}
+            <p className="mt-2 text-xs text-muted-foreground">
+              A pattern, not a promise. Bodies move around.
+            </p>
+          </div>
+        ) : (
+          <div className="paper p-5 text-sm text-muted-foreground">
+            Once you have logged symptoms in the run up to two periods, Laali can say when yours
+            tend to start.
+          </div>
+        )}
+      </Section>
+
+      <Section title="Severity over time">
+        {trends.length ? (
+          <div className="space-y-3">
+            {trends.map((t) => (
+              <div key={t.symptom} className="paper p-5">
+                <p className="text-sm font-semibold">{t.symptom}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t.direction === "harder"
+                    ? `Rated stronger in your recent cycles than earlier ones (${t.earlier.toFixed(1)} to ${t.recent.toFixed(1)} out of 3).`
+                    : t.direction === "easier"
+                      ? `Rated milder lately than earlier on (${t.earlier.toFixed(1)} to ${t.recent.toFixed(1)} out of 3).`
+                      : `Holding steady around ${t.recent.toFixed(1)} out of 3.`}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Based on {t.cyclesSeen} cycles where you rated it.
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="paper p-5 text-sm text-muted-foreground">
+            Rate how strong a symptom felt when you log it, mild, moderate or strong, and after
+            three cycles Laali can show whether it is easing or building.
+          </div>
+        )}
+      </Section>
+
       <IntimacySection rows={rows} opts={opts} />
+
+
 
 
 
