@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAcceptInvite, useProfile, useUpdateProfile } from "@/lib/data";
+import { INVITE_LENGTH, inviteErrorMessage, isCompleteCode, normalizeCode } from "@/lib/invite";
 import { PARTNER_STEPS, resumeStep } from "@/lib/routing";
 
 export const Route = createFileRoute("/_authenticated/partner-setup")({
@@ -40,6 +41,7 @@ function PartnerSetup() {
     profile.data?.birth_year ? String(profile.data.birth_year) : "",
   );
   const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const current = PARTNER_STEPS[step]!;
@@ -71,16 +73,26 @@ function PartnerSetup() {
 
   async function finish(withCode: boolean) {
     setBusy(true);
+    setCodeError(null);
     try {
+      // A bad code must not strand the account halfway: only mark setup done
+      // once the pairing itself succeeded (or was skipped on purpose).
       if (withCode) {
-        await acceptInvite.mutateAsync(code);
+        try {
+          await acceptInvite.mutateAsync(normalizeCode(code));
+        } catch (error) {
+          const message = inviteErrorMessage(error);
+          setCodeError(message);
+          toast.error("That code did not work", { description: message });
+          return;
+        }
         toast.success("You are connected");
       }
       await updateProfile.mutateAsync({ onboarded: true, onboarding_step: null });
       navigate({ to: "/partner", replace: true });
     } catch (error) {
       toast.error("That did not work", {
-        description: error instanceof Error ? error.message : "Please check the code and try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
       setBusy(false);
@@ -143,10 +155,22 @@ function PartnerSetup() {
               </p>
               <Input
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
+                onChange={(e) => {
+                  setCode(normalizeCode(e.target.value));
+                  setCodeError(null);
+                }}
                 placeholder="ABC123"
+                maxLength={INVITE_LENGTH}
+                aria-invalid={!!codeError}
+                aria-describedby={codeError ? "pair-error" : undefined}
                 className="numeral mt-6 h-14 rounded-xl text-center text-2xl tracking-[0.3em]"
+                style={codeError ? { borderColor: "var(--destructive)" } : undefined}
               />
+              {codeError ? (
+                <p id="pair-error" role="alert" className="mt-3 text-xs text-destructive">
+                  {codeError}
+                </p>
+              ) : null}
               <p className="mt-4 text-xs text-muted-foreground">
                 You will only ever see what they switch on, and they can switch it off at any time.
               </p>
@@ -163,7 +187,7 @@ function PartnerSetup() {
             <>
               <Button
                 className="h-12 w-full rounded-full text-base"
-                disabled={busy || code.length < 4}
+                disabled={busy || !isCompleteCode(code)}
                 onClick={() => finish(true)}
               >
                 {busy ? "Connecting" : "Connect"}
