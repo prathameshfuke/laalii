@@ -155,10 +155,22 @@ function PartnerSetup() {
               </p>
               <Input
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
+                onChange={(e) => {
+                  setCode(normalizeCode(e.target.value));
+                  setCodeError(null);
+                }}
                 placeholder="ABC123"
+                maxLength={INVITE_LENGTH}
+                aria-invalid={!!codeError}
+                aria-describedby={codeError ? "pair-error" : undefined}
                 className="numeral mt-6 h-14 rounded-xl text-center text-2xl tracking-[0.3em]"
+                style={codeError ? { borderColor: "var(--destructive)" } : undefined}
               />
+              {codeError ? (
+                <p id="pair-error" role="alert" className="mt-3 text-xs text-destructive">
+                  {codeError}
+                </p>
+              ) : null}
               <p className="mt-4 text-xs text-muted-foreground">
                 You will only ever see what they switch on, and they can switch it off at any time.
               </p>
