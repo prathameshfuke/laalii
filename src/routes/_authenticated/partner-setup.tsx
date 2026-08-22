@@ -73,16 +73,26 @@ function PartnerSetup() {
 
   async function finish(withCode: boolean) {
     setBusy(true);
+    setCodeError(null);
     try {
+      // A bad code must not strand the account halfway: only mark setup done
+      // once the pairing itself succeeded (or was skipped on purpose).
       if (withCode) {
-        await acceptInvite.mutateAsync(code);
+        try {
+          await acceptInvite.mutateAsync(normalizeCode(code));
+        } catch (error) {
+          const message = inviteErrorMessage(error);
+          setCodeError(message);
+          toast.error("That code did not work", { description: message });
+          return;
+        }
         toast.success("You are connected");
       }
       await updateProfile.mutateAsync({ onboarded: true, onboarding_step: null });
       navigate({ to: "/partner", replace: true });
     } catch (error) {
       toast.error("That did not work", {
-        description: error instanceof Error ? error.message : "Please check the code and try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
       setBusy(false);
