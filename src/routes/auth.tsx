@@ -66,11 +66,24 @@ function AuthPage() {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) void land();
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      void land();
+    };
+    // A Google redirect lands back here, so watch for the session arriving as
+    // well as checking for one that already exists.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) go();
     });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) go();
+    });
+    return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   async function submit(e: React.FormEvent) {
@@ -106,8 +119,10 @@ function AuthPage() {
   }
 
   async function google() {
+    // Come back to this public page (keeping the partner intent) so the role is
+    // still known when we decide where to send them next.
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth${partnerFlow ? "?role=partner" : ""}`,
     });
     if (result.error) {
       toast.error("Google sign-in failed");
