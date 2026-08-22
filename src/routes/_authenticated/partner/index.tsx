@@ -33,6 +33,7 @@ function PartnerHome() {
   const links = useLinksToMe();
   const accept = useAcceptInvite();
   const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   const link = (links.data ?? [])[0] ?? null;
   const owner = useOwnerProfile(link?.owner_id);
@@ -54,23 +55,36 @@ function PartnerHome() {
             </p>
             <Input
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onChange={(e) => {
+                setCode(normalizeCode(e.target.value));
+                setCodeError(null);
+              }}
               placeholder="ABC123"
-              maxLength={6}
+              maxLength={INVITE_LENGTH}
+              aria-invalid={!!codeError}
+              aria-describedby={codeError ? "code-error" : undefined}
               className="numeral mt-5 h-12 rounded-xl text-center text-xl tracking-[0.3em]"
+              style={codeError ? { borderColor: "var(--destructive)" } : undefined}
             />
+            {codeError ? (
+              <p id="code-error" role="alert" className="mt-2 text-xs text-destructive">
+                {codeError}
+              </p>
+            ) : null}
             <Button
               className="mt-3 h-12 w-full rounded-full"
-              disabled={code.length < 6 || accept.isPending}
-              onClick={() =>
-                accept.mutate(code, {
+              disabled={!isCompleteCode(code) || accept.isPending}
+              onClick={() => {
+                setCodeError(null);
+                accept.mutate(normalizeCode(code), {
                   onSuccess: () => toast.success("You're connected"),
-                  onError: (e) =>
-                    toast.error("Couldn't connect", {
-                      description: e instanceof Error ? e.message : undefined,
-                    }),
-                })
-              }
+                  onError: (e) => {
+                    const message = inviteErrorMessage(e);
+                    setCodeError(message);
+                    toast.error("Couldn't connect", { description: message });
+                  },
+                });
+              }}
             >
               {accept.isPending ? "Connecting…" : "Connect"}
             </Button>
@@ -79,6 +93,7 @@ function PartnerHome() {
       </AppShell>
     );
   }
+
 
   const opts = {
     avgCycleLength: owner.data?.avg_cycle_length ?? 28,
