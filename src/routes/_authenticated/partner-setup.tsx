@@ -41,6 +41,7 @@ function PartnerSetup() {
     profile.data?.birth_year ? String(profile.data.birth_year) : "",
   );
   const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const current = PARTNER_STEPS[step]!;
