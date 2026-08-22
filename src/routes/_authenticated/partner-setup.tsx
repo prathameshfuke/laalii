@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAcceptInvite, useProfile, useUpdateProfile } from "@/lib/data";
+import { INVITE_LENGTH, inviteErrorMessage, isCompleteCode, normalizeCode } from "@/lib/invite";
 import { PARTNER_STEPS, resumeStep } from "@/lib/routing";
 
 export const Route = createFileRoute("/_authenticated/partner-setup")({
