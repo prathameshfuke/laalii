@@ -187,7 +187,7 @@ function PartnerSetup() {
             <>
               <Button
                 className="h-12 w-full rounded-full text-base"
-                disabled={busy || code.length < 4}
+                disabled={busy || !isCompleteCode(code)}
                 onClick={() => finish(true)}
               >
                 {busy ? "Connecting" : "Connect"}
