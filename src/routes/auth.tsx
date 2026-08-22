@@ -119,8 +119,10 @@ function AuthPage() {
   }
 
   async function google() {
+    // Come back to this public page (keeping the partner intent) so the role is
+    // still known when we decide where to send them next.
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth${partnerFlow ? "?role=partner" : ""}`,
     });
     if (result.error) {
       toast.error("Google sign-in failed");
