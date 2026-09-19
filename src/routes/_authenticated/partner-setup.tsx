@@ -48,7 +48,9 @@ function PartnerSetup() {
   const [birthYear, setBirthYear] = useState(
     profile.data?.birth_year ? String(profile.data.birth_year) : "",
   );
-  const [code, setCode] = useState("");
+  // A code arriving through a shared invite link is filled in for them.
+  const [code, setCode] = useState(() => takeStashedCode());
+
   const [codeError, setCodeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -94,6 +96,7 @@ function PartnerSetup() {
           toast.error("That code did not work", { description: message });
           return;
         }
+        clearStashedCode();
         toast.success("You are connected");
       }
       await updateProfile.mutateAsync({ onboarded: true, onboarding_step: null });
