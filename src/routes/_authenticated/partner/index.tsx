@@ -97,7 +97,11 @@ function PartnerHome() {
               onClick={() => {
                 setCodeError(null);
                 accept.mutate(normalizeCode(code), {
-                  onSuccess: () => toast.success("You're connected"),
+                  onSuccess: () => {
+                    clearStashedCode();
+                    setCode("");
+                    toast.success("You're connected");
+                  },
                   onError: (e) => {
                     const message = inviteErrorMessage(e);
                     setCodeError(message);
