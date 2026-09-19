@@ -15,7 +15,14 @@ import {
   usePartnerNotes,
   useSendNote,
 } from "@/lib/data";
-import { INVITE_LENGTH, inviteErrorMessage, isCompleteCode, normalizeCode } from "@/lib/invite";
+import {
+  INVITE_LENGTH,
+  clearStashedCode,
+  inviteErrorMessage,
+  isCompleteCode,
+  normalizeCode,
+  takeStashedCode,
+} from "@/lib/invite";
 
 export const Route = createFileRoute("/_authenticated/partner/")({
   head: () => ({
