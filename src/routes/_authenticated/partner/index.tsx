@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/partner/")({
 function PartnerHome() {
   const links = useLinksToMe();
   const accept = useAcceptInvite();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(() => takeStashedCode());
   const [codeError, setCodeError] = useState<string | null>(null);
 
   const link = (links.data ?? [])[0] ?? null;
@@ -50,6 +50,18 @@ function PartnerHome() {
   const notes = usePartnerNotes(link?.id);
   const sendNote = useSendNote();
   const [draft, setDraft] = useState("");
+
+  if (links.isLoading) {
+    return (
+      <AppShell variant="his">
+        <Section>
+          <div className="paper mt-10 p-6 text-center text-sm text-muted-foreground">
+            Looking for your connection…
+          </div>
+        </Section>
+      </AppShell>
+    );
+  }
 
   if (!link) {
     return (
