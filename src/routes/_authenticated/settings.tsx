@@ -184,32 +184,48 @@ function SettingsPage() {
               <div className="rounded-2xl border border-dashed border-border p-4 text-center">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Invite code</p>
                 <p className="numeral mt-1 text-3xl tracking-[0.3em]">{link.invite_code}</p>
-                <div className="mt-2 flex justify-center gap-4 text-xs">
-                  <button
-                    className="underline underline-offset-4"
-                    onClick={() => {
-                      navigator.clipboard?.writeText(link.invite_code);
-                      toast.success("Code copied");
-                    }}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Waiting for your partner. Send it again as often as you like, the code keeps
+                  working until they use it.
+                </p>
+                <div className="mt-3 grid gap-2">
+                  <Button
+                    className="h-11 w-full rounded-full"
+                    onClick={() => shareInvite(link.invite_code)}
                   >
-                    Copy code
-                  </button>
-                  <button
-                    className="underline underline-offset-4"
-                    disabled={regenerate.isPending}
-                    onClick={() =>
-                      regenerate.mutate(link.id, {
-                        onSuccess: () => toast.success("New code ready, the old one is dead"),
-                      })
-                    }
-                  >
-                    Generate a new one
-                  </button>
+                    Send the invite
+                  </Button>
+                  <div className="flex justify-center gap-4 text-xs">
+                    <button
+                      className="underline underline-offset-4"
+                      onClick={async () => {
+                        const ok = await copyText(link.invite_code);
+                        if (ok) toast.success("Code copied");
+                        else toast.error("Could not copy, please note it down");
+                      }}
+                    >
+                      Copy code
+                    </button>
+                    <button
+                      className="underline underline-offset-4"
+                      disabled={regenerate.isPending}
+                      onClick={() =>
+                        regenerate.mutate(link.id, {
+                          onSuccess: () =>
+                            toast.success("New code ready, the old one stops working"),
+                          onError: () => toast.error("Could not make a new code"),
+                        })
+                      }
+                    >
+                      {regenerate.isPending ? "Working" : "Generate a new one"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
               <p className="text-sm">Connected. Your partner sees only the switches you leave on.</p>
             )}
+
 
             <Toggle
               label="Share my phase"

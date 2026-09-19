@@ -7,8 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAcceptInvite, useProfile, useUpdateProfile } from "@/lib/data";
-import { INVITE_LENGTH, inviteErrorMessage, isCompleteCode, normalizeCode } from "@/lib/invite";
+import {
+  INVITE_LENGTH,
+  clearStashedCode,
+  inviteErrorMessage,
+  isCompleteCode,
+  normalizeCode,
+  takeStashedCode,
+} from "@/lib/invite";
 import { PARTNER_STEPS, resumeStep } from "@/lib/routing";
+
 
 export const Route = createFileRoute("/_authenticated/partner-setup")({
   head: () => ({
@@ -40,7 +48,9 @@ function PartnerSetup() {
   const [birthYear, setBirthYear] = useState(
     profile.data?.birth_year ? String(profile.data.birth_year) : "",
   );
-  const [code, setCode] = useState("");
+  // A code arriving through a shared invite link is filled in for them.
+  const [code, setCode] = useState(() => takeStashedCode());
+
   const [codeError, setCodeError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -86,6 +96,7 @@ function PartnerSetup() {
           toast.error("That code did not work", { description: message });
           return;
         }
+        clearStashedCode();
         toast.success("You are connected");
       }
       await updateProfile.mutateAsync({ onboarded: true, onboarding_step: null });

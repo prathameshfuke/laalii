@@ -17,6 +17,46 @@ export function isCompleteCode(code: string): boolean {
   return normalizeCode(code).length === INVITE_LENGTH;
 }
 
+/** Where a partner should land when they follow a shared invite. */
+export function inviteLink(code: string, origin: string): string {
+  return `${origin}/auth?role=partner&code=${normalizeCode(code)}`;
+}
+
+export function inviteMessage(code: string, origin: string): string {
+  return `Join me on Laali. Open ${inviteLink(code, origin)} and the code ${normalizeCode(code)} is already filled in for you.`;
+}
+
+const STASH_KEY = "laali.invite";
+
+/** Keeps a shared code alive across sign in and the Google round trip. */
+export function stashCode(code: string | undefined | null) {
+  const clean = normalizeCode(code ?? "");
+  if (!clean) return;
+  try {
+    sessionStorage.setItem(STASH_KEY, clean);
+  } catch {
+    /* private mode, the person can still type the code */
+  }
+}
+
+export function takeStashedCode(): string {
+  try {
+    const value = sessionStorage.getItem(STASH_KEY) ?? "";
+    return normalizeCode(value);
+  } catch {
+    return "";
+  }
+}
+
+export function clearStashedCode() {
+  try {
+    sessionStorage.removeItem(STASH_KEY);
+  } catch {
+    /* nothing to clean up */
+  }
+}
+
+
 export function inviteErrorMessage(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error ?? "");
   const text = raw.toLowerCase();

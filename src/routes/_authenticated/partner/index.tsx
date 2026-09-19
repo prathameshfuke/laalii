@@ -15,7 +15,14 @@ import {
   usePartnerNotes,
   useSendNote,
 } from "@/lib/data";
-import { INVITE_LENGTH, inviteErrorMessage, isCompleteCode, normalizeCode } from "@/lib/invite";
+import {
+  INVITE_LENGTH,
+  clearStashedCode,
+  inviteErrorMessage,
+  isCompleteCode,
+  normalizeCode,
+  takeStashedCode,
+} from "@/lib/invite";
 
 export const Route = createFileRoute("/_authenticated/partner/")({
   head: () => ({
@@ -33,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/partner/")({
 function PartnerHome() {
   const links = useLinksToMe();
   const accept = useAcceptInvite();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(() => takeStashedCode());
   const [codeError, setCodeError] = useState<string | null>(null);
 
   const link = (links.data ?? [])[0] ?? null;
@@ -43,6 +50,18 @@ function PartnerHome() {
   const notes = usePartnerNotes(link?.id);
   const sendNote = useSendNote();
   const [draft, setDraft] = useState("");
+
+  if (links.isLoading) {
+    return (
+      <AppShell variant="his">
+        <Section>
+          <div className="paper mt-10 p-6 text-center text-sm text-muted-foreground">
+            Looking for your connection…
+          </div>
+        </Section>
+      </AppShell>
+    );
+  }
 
   if (!link) {
     return (
@@ -78,7 +97,11 @@ function PartnerHome() {
               onClick={() => {
                 setCodeError(null);
                 accept.mutate(normalizeCode(code), {
-                  onSuccess: () => toast.success("You're connected"),
+                  onSuccess: () => {
+                    clearStashedCode();
+                    setCode("");
+                    toast.success("You're connected");
+                  },
                   onError: (e) => {
                     const message = inviteErrorMessage(e);
                     setCodeError(message);
