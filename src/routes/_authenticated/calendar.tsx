@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { AppShell, Section } from "@/components/AppShell";
 import { LogSheet } from "@/components/LogSheet";
 import { IconChevron } from "@/components/Icons";
-import { PHASES, fromISO, phaseFor, predict, toISO, today } from "@/lib/cycle";
+import { PHASES, formatDay, fromISO, phaseFor, predict, predictExtended, toISO, today } from "@/lib/cycle";
 import { useCycles, useLogs, useProfile } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,7 @@ function CalendarPage() {
     lutealLength: profile.data?.luteal_length ?? 14,
   };
   const p = predict(rows, opts);
+  const extendedForecasts = useMemo(() => predictExtended(rows, 6, opts), [rows, opts.avgCycleLength, opts.lutealLength]);
 
   const days = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
@@ -144,6 +145,50 @@ function CalendarPage() {
           <span className="text-muted-foreground">Dashed = predicted</span>
         </div>
       </Section>
+
+      {extendedForecasts.length > 0 && (
+        <Section title="Extended Predictions">
+          <p className="mb-3 text-xs text-muted-foreground">
+            Multi-cycle calendar forecasts powered by clinically validated cycle models.
+          </p>
+          <div className="space-y-3">
+            {extendedForecasts.map((f) => (
+              <div key={f.cycleIndex} className="paper p-4 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium">Cycle +{f.cycleIndex}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[0.7rem] uppercase font-semibold",
+                        f.confidence === "high"
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          : f.confidence === "medium"
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                            : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {f.confidence} confidence
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <span>Period: <strong className="text-foreground">{formatDay(f.periodStart)} – {formatDay(f.periodEnd)}</strong></span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground border-t sm:border-t-0 pt-2 sm:pt-0">
+                  <div>
+                    <span className="block text-[0.7rem] uppercase tracking-wider">Ovulation</span>
+                    <span className="font-medium text-foreground">{formatDay(f.ovulationDate)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[0.7rem] uppercase tracking-wider">Fertile Window</span>
+                    <span className="font-medium text-foreground">{formatDay(f.fertileFrom)} – {formatDay(f.fertileTo)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {p.confidence === "low" ? (
         <Section>

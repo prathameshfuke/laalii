@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Drawer,
@@ -14,6 +14,7 @@ import { Mascot, type MascotState } from "@/components/Mascot";
 import { IconCheck, IconDrop } from "@/components/Icons";
 import {
   DESIRE_LABELS,
+  EXPERIENCE_CATEGORIES,
   FLOW_LEVELS,
   INTIMACY_ACTIVITIES,
   INTIMACY_SYMPTOMS,
@@ -85,6 +86,9 @@ export function LogSheet({
   const [activity, setActivity] = useState<string | null>(null);
   const [desire, setDesire] = useState<number | null>(null);
   const [intimacySymptoms, setIntimacySymptoms] = useState<string[]>([]);
+  const [categoryTab, setCategoryTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [birthControlTaken, setBirthControlTaken] = useState<boolean>(false);
 
   const saveLog = useSaveLog();
   const startPeriod = useStartPeriod();
@@ -97,6 +101,7 @@ export function LogSheet({
     setFlow(existing?.flow ?? null);
     setSymptoms(existing?.symptoms ?? []);
     setSeverity(existing?.symptom_severity ?? {});
+    setBirthControlTaken(existing?.birth_control_taken ?? false);
 
     setMoods(existing?.moods ?? []);
     setNote(existing?.note ?? "");
@@ -109,6 +114,20 @@ export function LogSheet({
     setIntimacySymptoms(existingIntimacy?.symptoms ?? []);
     setShowIntimacy(Boolean(existingIntimacy));
   }, [open, existing, existingIntimacy]);
+
+  const allExperiences = useMemo(() => {
+    if (categoryTab === "all") {
+      return [...new Set(EXPERIENCE_CATEGORIES.flatMap((c) => [...c.items]))];
+    }
+    const cat = EXPERIENCE_CATEGORIES.find((c) => c.id === categoryTab);
+    return cat ? [...cat.items] : [];
+  }, [categoryTab]);
+
+  const displayedExperiences = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return allExperiences;
+    return allExperiences.filter((item) => item.toLowerCase().includes(q));
+  }, [allExperiences, searchQuery]);
 
   const mascotState: MascotState = flow
     ? "comforted"
@@ -135,6 +154,7 @@ export function LogSheet({
         symptom_severity: Object.fromEntries(
           Object.entries(severity).filter(([name]) => symptoms.includes(name)),
         ),
+        birth_control_taken: birthControlTaken,
       });
 
       if (activity || desire !== null || intimacySymptoms.length) {
@@ -195,28 +215,103 @@ export function LogSheet({
             ) : null}
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-semibold">Body</p>
-            <div className="flex flex-wrap gap-2">
-              {SYMPTOMS.map((s) => (
-                <Chip
-                  key={s}
-                  active={symptoms.includes(s)}
-                  onClick={() => toggle(symptoms, setSymptoms, s)}
-                >
-                  {s}
-                </Chip>
-              ))}
+          {/* Birth Control Daily Log */}
+          <div className="rounded-2xl border border-border/60 bg-muted/20 p-3.5">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold">Birth Control & Contraception</p>
+              {birthControlTaken && (
+                <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <IconCheck className="h-3.5 w-3.5" /> Taken
+                </span>
+              )}
             </div>
+            <div className="flex flex-wrap gap-2">
+              <Chip
+                active={birthControlTaken}
+                onClick={() => setBirthControlTaken(!birthControlTaken)}
+              >
+                {birthControlTaken ? "Pill / Method Logged as Taken" : "Mark Birth Control Taken Today"}
+              </Chip>
+            </div>
+          </div>
+
+          {/* Over 200 Symptoms & Experiences Browser */}
+          <div>
+            <div className="mb-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">Physical & Emotional Experiences</p>
+                <span className="text-xs text-muted-foreground">
+                  {symptoms.length + moods.length} logged
+                </span>
+              </div>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search cramps, sleep, skin, mood..."
+                className="h-9 rounded-xl bg-background/80 text-xs"
+              />
+              <div className="flex gap-1.5 overflow-x-auto pb-1 pt-0.5 text-xs no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setCategoryTab("all")}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs whitespace-nowrap transition-colors",
+                    categoryTab === "all"
+                      ? "bg-foreground text-background font-medium"
+                      : "border border-border bg-card text-muted-foreground",
+                  )}
+                >
+                  All (200+)
+                </button>
+                {EXPERIENCE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryTab(cat.id)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs whitespace-nowrap transition-colors",
+                      categoryTab === cat.id
+                        ? "bg-foreground text-background font-medium"
+                        : "border border-border bg-card text-muted-foreground",
+                    )}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {displayedExperiences.map((item) => {
+                const isMoodItem = EXPERIENCE_CATEGORIES.find((c) => c.id === "mood")?.items.includes(item);
+                const isSelected = isMoodItem ? moods.includes(item) : symptoms.includes(item);
+                return (
+                  <Chip
+                    key={item}
+                    active={isSelected}
+                    onClick={() => {
+                      if (isMoodItem) {
+                        toggle(moods, setMoods, item);
+                      } else {
+                        toggle(symptoms, setSymptoms, item);
+                      }
+                    }}
+                  >
+                    {item}
+                  </Chip>
+                );
+              })}
+            </div>
+
             {symptoms.length ? (
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-3.5">
                 <p className="text-xs text-muted-foreground">
-                  How strong was it? Optional, and it is what lets Laali show a trend later.
+                  How strong was it? Optional severity scoring for trend analytics:
                 </p>
                 {symptoms.map((s) => (
                   <div key={s} className="flex items-center justify-between gap-3">
-                    <span className="text-sm">{s}</span>
-                    <div className="flex gap-1.5">
+                    <span className="text-xs">{s}</span>
+                    <div className="flex gap-1">
                       {SEVERITY_LABELS.map((label, i) => (
                         <button
                           key={label}
@@ -230,7 +325,7 @@ export function LogSheet({
                             })
                           }
                           className={cn(
-                            "rounded-full border px-2.5 py-1 text-xs transition-all",
+                            "rounded-full border px-2 py-0.5 text-[11px] transition-all",
                             severity[s] === i + 1
                               ? "border-foreground/70 bg-primary/30 text-foreground"
                               : "border-border bg-card text-muted-foreground",
@@ -244,18 +339,6 @@ export function LogSheet({
                 ))}
               </div>
             ) : null}
-          </div>
-
-
-          <div>
-            <p className="mb-2 text-sm font-semibold">Mood</p>
-            <div className="flex flex-wrap gap-2">
-              {MOODS.map((m) => (
-                <Chip key={m} active={moods.includes(m)} onClick={() => toggle(moods, setMoods, m)}>
-                  {m}
-                </Chip>
-              ))}
-            </div>
           </div>
 
           <div>

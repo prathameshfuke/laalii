@@ -3,6 +3,8 @@ import { useMemo } from "react";
 import { AppShell, Section } from "@/components/AppShell";
 import { Mascot } from "@/components/Mascot";
 import {
+  BIRTH_CONTROL_METHODS,
+  LIFE_STAGE_MODES,
   INTIMACY_FLAGS,
   PHASES,
   cycleLengths,
@@ -70,6 +72,11 @@ function InsightsPage() {
   const pms = pmsWindow(logs.data ?? [], rows, p.nextStart);
   const trends = severityTrends(logs.data ?? [], rows);
 
+  const lifeStage = LIFE_STAGE_MODES.find((m) => m.id === profile.data?.life_stage_mode) ?? LIFE_STAGE_MODES[0];
+  const bcMethod = BIRTH_CONTROL_METHODS.find((b) => b.id === (profile.data?.birth_control_type as any) && b.id !== "none");
+  const pillLogsCount = useMemo(() => {
+    return (logs.data ?? []).filter((l) => l.birth_control_taken).length;
+  }, [logs.data]);
 
   return (
     <AppShell variant="her">
@@ -108,6 +115,46 @@ function InsightsPage() {
         </div>
       </Section>
 
+      <Section title="Life Stage & Contraception Monitoring">
+        <div className="paper p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[0.7rem] uppercase tracking-wider text-muted-foreground">Life Stage Mode</span>
+              <p className="text-base font-semibold">{lifeStage.name}</p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              {lifeStage.focus}
+            </span>
+          </div>
+
+          {bcMethod ? (
+            <div className="rounded-xl border border-border bg-card/50 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{bcMethod.name}</p>
+                {bcMethod.category === "pill" && (
+                  <span className="rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs text-rose-600 dark:text-rose-400">
+                    Daily Oral Contraceptive
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{bcMethod.impactNote}</p>
+              {profile.data?.birth_control_reminder && (
+                <p className="text-xs text-muted-foreground">
+                  Daily reminder scheduled at: <strong className="text-foreground">{profile.data.birth_control_reminder}</strong>
+                </p>
+              )}
+              <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                <span>Doses logged: <strong className="text-foreground">{pillLogsCount} days</strong></span>
+                <span className="text-[0.7rem] text-muted-foreground uppercase tracking-wider">Method: {bcMethod.category}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+              No birth control method actively tracked. You can configure pills, patches, rings, or IUDs in Settings.
+            </div>
+          )}
+        </div>
+      </Section>
 
       <Section title="Cycle length over time">
         {lengths.length < 2 ? (

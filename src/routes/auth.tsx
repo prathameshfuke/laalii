@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png.asset.json";
 import { Mascot } from "@/components/Mascot";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { profileQuery } from "@/lib/data";
+import { authMessage } from "@/lib/auth-errors";
 import { normalizeCode, stashCode } from "@/lib/invite";
 import { destinationFor } from "@/lib/routing";
 
@@ -34,34 +35,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-/** Turns a Supabase auth error into something a person can act on. */
-function authMessage(error: unknown, mode: "signin" | "signup"): string {
-  const text = (error instanceof Error ? error.message : String(error ?? "")).toLowerCase();
-  if (text.includes("invalid login credentials")) {
-    return "That email and password do not match. Check the password, or create an account if you are new here.";
-  }
-  if (text.includes("already registered") || text.includes("already been registered")) {
-    return "There is already an account with this email. Try signing in instead.";
-  }
-  if (text.includes("password should be")) {
-    return "Please use a password of at least six characters.";
-  }
-  if (text.includes("email address") && text.includes("invalid")) {
-    return "That email address does not look right.";
-  }
-  if (text.includes("rate limit") || text.includes("too many")) {
-    return "Too many attempts just now. Wait a minute and try again.";
-  }
-  if (text.includes("failed to fetch") || text.includes("network")) {
-    return "We could not reach the server. Check your connection and try again.";
-  }
-  if (text.includes("not confirmed")) {
-    return "This email is not confirmed yet. Open the link we sent you, or ask for a new one below.";
-  }
-  return mode === "signin"
-    ? "We could not sign you in. Please try again."
-    : "We could not create the account. Please try again.";
-}
+
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -93,18 +67,44 @@ function AuthPage() {
   async function land() {
     let profile = await qc.fetchQuery(profileQuery);
     if (partnerFlow && profile && !profile.role) {
-      const { data } = await supabase
-        .from("profiles")
-        .update({ role: "partner", onboarding_step: "basics" })
-        .eq("id", profile.id)
-        .select()
-        .maybeSingle();
-      if (data) {
-        profile = data as typeof profile;
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .update({ role: "partner", onboarding_step: "basics" })
+          .eq("id", profile.id)
+          .select()
+          .maybeSingle();
+        if (data) {
+          profile = data as typeof profile;
+          qc.setQueryData(profileQuery.queryKey, profile);
+        } else {
+          profile = { ...profile, role: "partner", onboarding_step: "basics" };
+          qc.setQueryData(profileQuery.queryKey, profile);
+        }
+      } catch {
+        profile = { ...profile, role: "partner", onboarding_step: "basics" };
         qc.setQueryData(profileQuery.queryKey, profile);
       }
     }
     navigate({ to: destinationFor(profile), replace: true });
+  }
+
+  const inFlightLandRef = useRef<Promise<void> | null>(null);
+
+  function executeLand() {
+    if (!inFlightLandRef.current) {
+      inFlightLandRef.current = land()
+        .catch((error) => {
+          console.error("Error loading account profile:", error);
+          toast.error("We signed you in, but could not load your account", {
+            description: error instanceof Error ? error.message : "Please try again.",
+          });
+        })
+        .finally(() => {
+          inFlightLandRef.current = null;
+        });
+    }
+    return inFlightLandRef.current;
   }
 
   useEffect(() => {
@@ -112,12 +112,7 @@ function AuthPage() {
     const go = () => {
       if (done) return;
       done = true;
-      land().catch((error) => {
-        done = false;
-        toast.error("We signed you in, but could not load your account", {
-          description: error instanceof Error ? error.message : "Please try again.",
-        });
-      });
+      executeLand();
     };
     // A Google redirect lands back here, so watch for the session arriving as
     // well as checking for one that already exists.
@@ -158,7 +153,7 @@ function AuthPage() {
         });
         if (error) throw error;
       }
-      await land();
+      await executeLand();
     } catch (error) {
       const message = authMessage(error, mode);
       setFormError(message);
@@ -214,17 +209,35 @@ function AuthPage() {
       if (partnerFlow) params.set("role", "partner");
       if (sharedCode) params.set("code", sharedCode);
       const query = params.toString();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth${query ? `?${query}` : ""}`,
-      });
-      if (result.error) {
-        const message = "Google sign-in did not complete. Try again, or use your email below.";
-        setFormError(message);
-        toast.error("Google sign-in failed", { description: message });
+      const redirectUri = `${window.location.origin}/auth${query ? `?${query}` : ""}`;
+
+      let result;
+      try {
+        result = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: redirectUri,
+        });
+      } catch {
+        result = { error: new Error("Lovable auth unavailable") };
+      }
+
+      if (result?.error) {
+        // Fallback directly to Supabase OAuth
+        const { error: sbOAuthError } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: redirectUri,
+          },
+        });
+        if (sbOAuthError) {
+          const message = authMessage(sbOAuthError, "signin");
+          setFormError(message);
+          toast.error("Google sign-in failed", { description: message });
+          return;
+        }
         return;
       }
-      if (result.redirected) return;
-      await land();
+      if (result?.redirected) return;
+      await executeLand();
     } catch (error) {
       const message = authMessage(error, "signin");
       setFormError(message);

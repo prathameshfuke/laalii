@@ -33,7 +33,13 @@ import {
   useUpdateLink,
   useUpdateProfile,
   type Intent,
+  type LifeStageMode,
 } from "@/lib/data";
+import {
+  BIRTH_CONTROL_METHODS,
+  LIFE_STAGE_MODES,
+  type BirthControlType,
+} from "@/lib/cycle";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -158,7 +164,88 @@ function SettingsPage() {
         ) : null}
       </Section>
 
-      <Section title="Couples Mode" hint="you are in control">
+      {/* Life Stage Modes */}
+      <Section title="Life Stage Modes" hint="customize tracking for where you are in life">
+        <div className="paper grid gap-2.5 p-3">
+          {LIFE_STAGE_MODES.map((mode) => {
+            const active = (profile.data?.life_stage_mode ?? "period_tracking") === mode.id;
+            return (
+              <button
+                key={mode.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => updateProfile.mutate({ life_stage_mode: mode.id as LifeStageMode })}
+                className="rounded-2xl border p-4 text-left transition-all"
+                style={{
+                  borderColor: active ? "var(--ink)" : "var(--border)",
+                  background: active
+                    ? "color-mix(in oklab, var(--apricot) 22%, transparent)"
+                    : "transparent",
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-sm">{mode.name}</p>
+                  {active && (
+                    <span className="rounded-full bg-foreground px-2 py-0.5 text-[10px] font-medium text-background">
+                      Active Mode
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{mode.description}</p>
+                <p className="mt-2 text-[11px] font-medium text-primary">Focus: {mode.focus}</p>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Birth Control Management */}
+      <Section title="Birth Control Management" hint="reminders & contraception monitoring">
+        <div className="paper space-y-4 p-5">
+          <div>
+            <Label htmlFor="bc-method" className="text-sm font-semibold">Current Contraception Method</Label>
+            <select
+              id="bc-method"
+              value={profile.data?.birth_control_type ?? "none"}
+              onChange={(e) => updateProfile.mutate({ birth_control_type: e.target.value as BirthControlType })}
+              className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm focus:outline-none"
+            >
+              {BIRTH_CONTROL_METHODS.map((bc) => (
+                <option key={bc.id} value={bc.id}>
+                  {bc.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {profile.data?.birth_control_type && profile.data.birth_control_type !== "none" ? (
+            <>
+              <div>
+                <Label htmlFor="bc-reminder" className="text-sm font-semibold">Daily Reminder Time</Label>
+                <Input
+                  id="bc-reminder"
+                  type="time"
+                  value={profile.data?.birth_control_reminder ?? "21:00"}
+                  onChange={(e) => updateProfile.mutate({ birth_control_reminder: e.target.value })}
+                  className="mt-1.5 h-11 rounded-xl"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Laali will alert you at this time to take or verify your contraception.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-3 text-xs">
+                <p className="font-medium text-foreground">Contraception Impact:</p>
+                <p className="mt-0.5 text-muted-foreground">
+                  {BIRTH_CONTROL_METHODS.find((b) => b.id === profile.data?.birth_control_type)?.impactNote}
+                </p>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </Section>
+
+      <Section title="Couples Mode & Clue Connect" hint="securely share phases with a partner or friend">
         {!link ? (
           <div className="paper p-5">
             <p className="text-sm text-muted-foreground">
