@@ -588,12 +588,22 @@ function AuthPage() {
           {googleBusy ? "Opening Google…" : "Continue with Google"}
         </Button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setFormError(null);
-          }}
+        <Button
+          variant="outline"
+          onClick={apple}
+          disabled={appleBusy}
+          className="mt-3 h-12 w-full rounded-full border-border bg-card text-base"
+        >
+          {appleBusy ? "Opening Apple…" : "Continue with Apple"}
+        </Button>
+
+        {channel === "email" ? (
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setFormError(null);
+            }}
           className="mt-6 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
         >
           {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
