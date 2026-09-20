@@ -41,6 +41,7 @@ export type Database = {
       day_logs: {
         Row: {
           bbt: number | null
+          birth_control_taken: boolean
           created_at: string
           flow: string | null
           id: string
@@ -56,6 +57,7 @@ export type Database = {
         }
         Insert: {
           bbt?: number | null
+          birth_control_taken?: boolean
           created_at?: string
           flow?: string | null
           id?: string
@@ -71,6 +73,7 @@ export type Database = {
         }
         Update: {
           bbt?: number | null
+          birth_control_taken?: boolean
           created_at?: string
           flow?: string | null
           id?: string
@@ -200,16 +203,21 @@ export type Database = {
         Row: {
           advanced_tracking: boolean
           avg_cycle_length: number
+          birth_control_reminder: string | null
+          birth_control_type: string | null
           birth_year: number | null
           care_dismissed_cycle: string | null
+          clue_connect_enabled: boolean
           created_at: string
           display_name: string | null
           id: string
           intent: string
+          life_stage_mode: string
           luteal_length: number
           mascot_name: string
           onboarded: boolean
           onboarding_step: string | null
+          phone: string | null
           reduce_motion: boolean
           role: string | null
           updated_at: string
@@ -217,16 +225,21 @@ export type Database = {
         Insert: {
           advanced_tracking?: boolean
           avg_cycle_length?: number
+          birth_control_reminder?: string | null
+          birth_control_type?: string | null
           birth_year?: number | null
           care_dismissed_cycle?: string | null
+          clue_connect_enabled?: boolean
           created_at?: string
           display_name?: string | null
           id: string
           intent?: string
+          life_stage_mode?: string
           luteal_length?: number
           mascot_name?: string
           onboarded?: boolean
           onboarding_step?: string | null
+          phone?: string | null
           reduce_motion?: boolean
           role?: string | null
           updated_at?: string
@@ -234,16 +247,21 @@ export type Database = {
         Update: {
           advanced_tracking?: boolean
           avg_cycle_length?: number
+          birth_control_reminder?: string | null
+          birth_control_type?: string | null
           birth_year?: number | null
           care_dismissed_cycle?: string | null
+          clue_connect_enabled?: boolean
           created_at?: string
           display_name?: string | null
           id?: string
           intent?: string
+          life_stage_mode?: string
           luteal_length?: number
           mascot_name?: string
           onboarded?: boolean
           onboarding_step?: string | null
+          phone?: string | null
           reduce_motion?: boolean
           role?: string | null
           updated_at?: string

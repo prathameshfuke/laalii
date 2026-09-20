@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { profileQuery } from "@/lib/data";
-import { authMessage } from "@/lib/auth-errors";
+import { authMessage, phoneAuthMessage } from "@/lib/auth-errors";
 import { normalizeCode, stashCode } from "@/lib/invite";
 import { destinationFor } from "@/lib/routing";
 
@@ -43,6 +43,12 @@ function AuthPage() {
   const { role: intendedRole, code: sharedCode } = Route.useSearch();
   const partnerFlow = intendedRole === "partner";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [channel, setChannel] = useState<"email" | "phone">("email");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const [appleBusy, setAppleBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -247,6 +253,110 @@ function AuthPage() {
     }
   }
 
+  function returnUri() {
+    const params = new URLSearchParams();
+    if (partnerFlow) params.set("role", "partner");
+    if (sharedCode) params.set("code", sharedCode);
+    const query = params.toString();
+    return `${window.location.origin}/auth${query ? `?${query}` : ""}`;
+  }
+
+  async function apple() {
+    if (appleBusy) return;
+    setAppleBusy(true);
+    setFormError(null);
+    try {
+      const redirectUri = returnUri();
+      let result;
+      try {
+        result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectUri });
+      } catch {
+        result = { error: new Error("Lovable auth unavailable") };
+      }
+      if (result?.error) {
+        const { error: sbError } = await supabase.auth.signInWithOAuth({
+          provider: "apple",
+          options: { redirectTo: redirectUri },
+        });
+        if (sbError) {
+          const message = authMessage(sbError, "signin");
+          setFormError(message);
+          toast.error("Apple sign-in failed", { description: message });
+        }
+        return;
+      }
+      if (result?.redirected) return;
+      await executeLand();
+    } catch (error) {
+      const message = authMessage(error, "signin");
+      setFormError(message);
+      toast.error("Apple sign-in failed", { description: message });
+    } finally {
+      setAppleBusy(false);
+    }
+  }
+
+  /** Numbers are kept in the international form the server expects. */
+  function cleanPhone(raw: string) {
+    const digits = raw.replace(/[^\d+]/g, "");
+    return digits.startsWith("+") ? `+${digits.slice(1).replace(/\+/g, "")}` : digits ? `+${digits}` : "";
+  }
+
+  async function sendCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (phoneBusy) return;
+    const number = cleanPhone(phone);
+    if (number.replace(/\D/g, "").length < 8) {
+      setFormError("Enter your number with the country code, for example +91 98765 43210.");
+      return;
+    }
+    setPhoneBusy(true);
+    setFormError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: number,
+        options: { shouldCreateUser: true },
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      setOtp("");
+      toast.success("Code sent", { description: `We texted six digits to ${number}.` });
+    } catch (error) {
+      const message = phoneAuthMessage(error, "send");
+      setFormError(message);
+      toast.error("Could not send the code", { description: message });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
+  async function confirmCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (phoneBusy) return;
+    const token = otp.replace(/\D/g, "");
+    if (token.length < 6) {
+      setFormError("Enter the six digits from the text message.");
+      return;
+    }
+    setPhoneBusy(true);
+    setFormError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: cleanPhone(phone),
+        token,
+        type: "sms",
+      });
+      if (error) throw error;
+      await executeLand();
+    } catch (error) {
+      const message = phoneAuthMessage(error, "verify");
+      setFormError(message);
+      toast.error("That code did not work", { description: message });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
   if (sent) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
@@ -299,70 +409,169 @@ function AuthPage() {
             : "Your cycle data is private to your account."}
         </p>
 
-        <form onSubmit={submit} className="mt-8 space-y-4">
-          {mode === "signup" ? (
+        <div className="mt-8 grid grid-cols-2 gap-1 rounded-full bg-muted p-1 text-sm">
+          {(["email", "phone"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                setChannel(option);
+                setFormError(null);
+              }}
+              className={
+                channel === option
+                  ? "rounded-full bg-card py-2 font-medium shadow-sm"
+                  : "rounded-full py-2 text-muted-foreground"
+              }
+            >
+              {option === "email" ? "Email" : "Phone"}
+            </button>
+          ))}
+        </div>
+
+        {channel === "email" ? (
+          <>
+            <form onSubmit={submit} className="mt-6 space-y-4">
+              {mode === "signup" ? (
+                <div>
+                  <Label htmlFor="name">Your name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Optional"
+                    autoComplete="name"
+                    className="mt-1.5 h-12 rounded-xl"
+                  />
+                </div>
+              ) : null}
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFormError(null);
+                  }}
+                  className="mt-1.5 h-12 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setFormError(null);
+                  }}
+                  className="mt-1.5 h-12 rounded-xl"
+                />
+              </div>
+              {formError ? (
+                <p role="alert" className="text-xs text-destructive">
+                  {formError}
+                </p>
+              ) : null}
+              <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base">
+                {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
+              </Button>
+            </form>
+
+            {mode === "signin" ? (
+              <button
+                type="button"
+                onClick={forgotPassword}
+                className="mt-3 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
+              >
+                Forgot your password?
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <form onSubmit={otpSent ? confirmCode : sendCode} className="mt-6 space-y-4">
             <div>
-              <Label htmlFor="name">Your name</Label>
+              <Label htmlFor="phone">Phone number</Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Optional"
-                autoComplete="name"
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+91 98765 43210"
+                value={phone}
+                disabled={otpSent}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setFormError(null);
+                }}
                 className="mt-1.5 h-12 rounded-xl"
               />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Include your country code. New numbers get an account on the first sign in.
+              </p>
             </div>
-          ) : null}
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setFormError(null);
-              }}
-              className="mt-1.5 h-12 rounded-xl"
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setFormError(null);
-              }}
-              className="mt-1.5 h-12 rounded-xl"
-            />
-          </div>
-          {formError ? (
-            <p role="alert" className="text-xs text-destructive">
-              {formError}
-            </p>
-          ) : null}
-          <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base">
-            {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
-          </Button>
-        </form>
 
-        {mode === "signin" ? (
-          <button
-            type="button"
-            onClick={forgotPassword}
-            className="mt-3 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
-          >
-            Forgot your password?
-          </button>
-        ) : null}
+            {otpSent ? (
+              <div>
+                <Label htmlFor="otp">Six digit code</Label>
+                <Input
+                  id="otp"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setFormError(null);
+                  }}
+                  className="numeral mt-1.5 h-12 rounded-xl tracking-[0.3em]"
+                />
+              </div>
+            ) : null}
+
+            {formError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {formError}
+              </p>
+            ) : null}
+
+            <Button type="submit" disabled={phoneBusy} className="h-12 w-full rounded-full text-base">
+              {phoneBusy ? "One moment…" : otpSent ? "Sign in" : "Text me a code"}
+            </Button>
+
+            {otpSent ? (
+              <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  disabled={phoneBusy}
+                  onClick={() => sendCode()}
+                  className="underline underline-offset-4"
+                >
+                  Send the code again
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                    setFormError(null);
+                  }}
+                  className="underline underline-offset-4"
+                >
+                  Use a different number
+                </button>
+              </div>
+            ) : null}
+          </form>
+        )}
 
         <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
@@ -379,16 +588,28 @@ function AuthPage() {
           {googleBusy ? "Opening Google…" : "Continue with Google"}
         </Button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setFormError(null);
-          }}
-          className="mt-6 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
+        <Button
+          variant="outline"
+          onClick={apple}
+          disabled={appleBusy}
+          className="mt-3 h-12 w-full rounded-full border-border bg-card text-base"
         >
-          {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
-        </button>
+          {appleBusy ? "Opening Apple…" : "Continue with Apple"}
+        </Button>
+
+        {channel === "email" ? (
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setFormError(null);
+            }}
+            className="mt-6 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
+          >
+            {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
+          </button>
+        ) : null}
+
 
         {!partnerFlow ? (
           <Link

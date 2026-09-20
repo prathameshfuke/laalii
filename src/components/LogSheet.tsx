@@ -283,7 +283,10 @@ export function LogSheet({
 
             <div className="flex flex-wrap gap-1.5">
               {displayedExperiences.map((item) => {
-                const isMoodItem = EXPERIENCE_CATEGORIES.find((c) => c.id === "mood")?.items.includes(item);
+                const moodItems = EXPERIENCE_CATEGORIES.find((c) => c.id === "mood")?.items as
+                  | readonly string[]
+                  | undefined;
+                const isMoodItem = moodItems?.includes(item) ?? false;
                 const isSelected = isMoodItem ? moods.includes(item) : symptoms.includes(item);
                 return (
                   <Chip
