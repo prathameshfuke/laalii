@@ -40,6 +40,7 @@ import {
   LIFE_STAGE_MODES,
   type BirthControlType,
 } from "@/lib/cycle";
+import { inviteMessage } from "@/lib/invite";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -62,6 +63,45 @@ const INTENTS: Array<{ value: Intent; label: string }> = [
   { value: "conceive", label: "Trying to conceive" },
   { value: "avoid", label: "Avoiding pregnancy" },
 ];
+
+/** Copies text, falling back to an old browser trick when the clipboard is blocked. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(field);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/** Opens the phone share sheet when there is one, otherwise copies the invite. */
+async function shareInvite(code: string) {
+  const message = inviteMessage(code, window.location.origin);
+  const shareApi = typeof navigator !== "undefined" ? navigator.share : undefined;
+  if (shareApi) {
+    try {
+      await navigator.share({ title: "Join me on Laali", text: message });
+      return;
+    } catch {
+      /* the person closed the share sheet, fall through to copying */
+    }
+  }
+  const ok = await copyText(message);
+  if (ok) toast.success("Invite copied", { description: "Paste it wherever you chat." });
+  else toast.error("Could not copy the invite", { description: `Share this code: ${code}` });
+}
 
 function SettingsPage() {
   const navigate = useNavigate();
