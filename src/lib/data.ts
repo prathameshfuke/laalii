@@ -189,7 +189,7 @@ export async function fetchProfile(): Promise<Profile | null> {
   const sessionUser = userData.user;
   const fallback: Profile = {
     id: uid,
-    display_name: sessionUser?.user_metadata?.display_name ?? null,
+    display_name: (sessionUser?.user_metadata?.['display_name'] as string | undefined) ?? null,
     mascot_name: "Laali",
     birth_year: null,
     avg_cycle_length: 28,
@@ -349,7 +349,7 @@ export function useSaveLog() {
         mucus: entry.mucus ?? (index >= 0 ? existing[index]!.mucus : null),
         medications: entry.medications ?? (index >= 0 ? existing[index]!.medications : null),
         symptom_severity: entry.symptom_severity ?? (index >= 0 ? existing[index]!.symptom_severity : {}),
-        birth_control_taken: entry.birth_control_taken ?? (index >= 0 ? existing[index]!.birth_control_taken : undefined),
+        birth_control_taken: entry.birth_control_taken ?? (index >= 0 ? (existing[index]!.birth_control_taken ?? false) : false),
       };
       if (index >= 0) {
         existing[index] = updatedLog;
