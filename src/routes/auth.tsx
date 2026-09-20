@@ -253,6 +253,110 @@ function AuthPage() {
     }
   }
 
+  function returnUri() {
+    const params = new URLSearchParams();
+    if (partnerFlow) params.set("role", "partner");
+    if (sharedCode) params.set("code", sharedCode);
+    const query = params.toString();
+    return `${window.location.origin}/auth${query ? `?${query}` : ""}`;
+  }
+
+  async function apple() {
+    if (appleBusy) return;
+    setAppleBusy(true);
+    setFormError(null);
+    try {
+      const redirectUri = returnUri();
+      let result;
+      try {
+        result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectUri });
+      } catch {
+        result = { error: new Error("Lovable auth unavailable") };
+      }
+      if (result?.error) {
+        const { error: sbError } = await supabase.auth.signInWithOAuth({
+          provider: "apple",
+          options: { redirectTo: redirectUri },
+        });
+        if (sbError) {
+          const message = authMessage(sbError, "signin");
+          setFormError(message);
+          toast.error("Apple sign-in failed", { description: message });
+        }
+        return;
+      }
+      if (result?.redirected) return;
+      await executeLand();
+    } catch (error) {
+      const message = authMessage(error, "signin");
+      setFormError(message);
+      toast.error("Apple sign-in failed", { description: message });
+    } finally {
+      setAppleBusy(false);
+    }
+  }
+
+  /** Numbers are kept in the international form the server expects. */
+  function cleanPhone(raw: string) {
+    const digits = raw.replace(/[^\d+]/g, "");
+    return digits.startsWith("+") ? `+${digits.slice(1).replace(/\+/g, "")}` : digits ? `+${digits}` : "";
+  }
+
+  async function sendCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (phoneBusy) return;
+    const number = cleanPhone(phone);
+    if (number.replace(/\D/g, "").length < 8) {
+      setFormError("Enter your number with the country code, for example +91 98765 43210.");
+      return;
+    }
+    setPhoneBusy(true);
+    setFormError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: number,
+        options: { shouldCreateUser: true },
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      setOtp("");
+      toast.success("Code sent", { description: `We texted six digits to ${number}.` });
+    } catch (error) {
+      const message = phoneAuthMessage(error, "send");
+      setFormError(message);
+      toast.error("Could not send the code", { description: message });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
+  async function confirmCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (phoneBusy) return;
+    const token = otp.replace(/\D/g, "");
+    if (token.length < 6) {
+      setFormError("Enter the six digits from the text message.");
+      return;
+    }
+    setPhoneBusy(true);
+    setFormError(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: cleanPhone(phone),
+        token,
+        type: "sms",
+      });
+      if (error) throw error;
+      await executeLand();
+    } catch (error) {
+      const message = phoneAuthMessage(error, "verify");
+      setFormError(message);
+      toast.error("That code did not work", { description: message });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
   if (sent) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
