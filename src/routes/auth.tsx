@@ -604,10 +604,12 @@ function AuthPage() {
               setMode(mode === "signin" ? "signup" : "signin");
               setFormError(null);
             }}
-          className="mt-6 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
-        >
-          {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
-        </button>
+            className="mt-6 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
+          >
+            {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
+          </button>
+        ) : null}
+
 
         {!partnerFlow ? (
           <Link
