@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { profileQuery } from "@/lib/data";
-import { authMessage } from "@/lib/auth-errors";
+import { authMessage, phoneAuthMessage } from "@/lib/auth-errors";
 import { normalizeCode, stashCode } from "@/lib/invite";
 import { destinationFor } from "@/lib/routing";
 
@@ -43,6 +43,12 @@ function AuthPage() {
   const { role: intendedRole, code: sharedCode } = Route.useSearch();
   const partnerFlow = intendedRole === "partner";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [channel, setChannel] = useState<"email" | "phone">("email");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const [appleBusy, setAppleBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
