@@ -409,70 +409,169 @@ function AuthPage() {
             : "Your cycle data is private to your account."}
         </p>
 
-        <form onSubmit={submit} className="mt-8 space-y-4">
-          {mode === "signup" ? (
+        <div className="mt-8 grid grid-cols-2 gap-1 rounded-full bg-muted p-1 text-sm">
+          {(["email", "phone"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                setChannel(option);
+                setFormError(null);
+              }}
+              className={
+                channel === option
+                  ? "rounded-full bg-card py-2 font-medium shadow-sm"
+                  : "rounded-full py-2 text-muted-foreground"
+              }
+            >
+              {option === "email" ? "Email" : "Phone"}
+            </button>
+          ))}
+        </div>
+
+        {channel === "email" ? (
+          <>
+            <form onSubmit={submit} className="mt-6 space-y-4">
+              {mode === "signup" ? (
+                <div>
+                  <Label htmlFor="name">Your name</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Optional"
+                    autoComplete="name"
+                    className="mt-1.5 h-12 rounded-xl"
+                  />
+                </div>
+              ) : null}
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFormError(null);
+                  }}
+                  className="mt-1.5 h-12 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setFormError(null);
+                  }}
+                  className="mt-1.5 h-12 rounded-xl"
+                />
+              </div>
+              {formError ? (
+                <p role="alert" className="text-xs text-destructive">
+                  {formError}
+                </p>
+              ) : null}
+              <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base">
+                {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
+              </Button>
+            </form>
+
+            {mode === "signin" ? (
+              <button
+                type="button"
+                onClick={forgotPassword}
+                className="mt-3 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
+              >
+                Forgot your password?
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <form onSubmit={otpSent ? confirmCode : sendCode} className="mt-6 space-y-4">
             <div>
-              <Label htmlFor="name">Your name</Label>
+              <Label htmlFor="phone">Phone number</Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Optional"
-                autoComplete="name"
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+91 98765 43210"
+                value={phone}
+                disabled={otpSent}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setFormError(null);
+                }}
                 className="mt-1.5 h-12 rounded-xl"
               />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Include your country code. New numbers get an account on the first sign in.
+              </p>
             </div>
-          ) : null}
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setFormError(null);
-              }}
-              className="mt-1.5 h-12 rounded-xl"
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setFormError(null);
-              }}
-              className="mt-1.5 h-12 rounded-xl"
-            />
-          </div>
-          {formError ? (
-            <p role="alert" className="text-xs text-destructive">
-              {formError}
-            </p>
-          ) : null}
-          <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base">
-            {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
-          </Button>
-        </form>
 
-        {mode === "signin" ? (
-          <button
-            type="button"
-            onClick={forgotPassword}
-            className="mt-3 w-full text-center text-sm text-muted-foreground underline underline-offset-4"
-          >
-            Forgot your password?
-          </button>
-        ) : null}
+            {otpSent ? (
+              <div>
+                <Label htmlFor="otp">Six digit code</Label>
+                <Input
+                  id="otp"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setFormError(null);
+                  }}
+                  className="numeral mt-1.5 h-12 rounded-xl tracking-[0.3em]"
+                />
+              </div>
+            ) : null}
+
+            {formError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {formError}
+              </p>
+            ) : null}
+
+            <Button type="submit" disabled={phoneBusy} className="h-12 w-full rounded-full text-base">
+              {phoneBusy ? "One moment…" : otpSent ? "Sign in" : "Text me a code"}
+            </Button>
+
+            {otpSent ? (
+              <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  disabled={phoneBusy}
+                  onClick={() => sendCode()}
+                  className="underline underline-offset-4"
+                >
+                  Send the code again
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                    setFormError(null);
+                  }}
+                  className="underline underline-offset-4"
+                >
+                  Use a different number
+                </button>
+              </div>
+            ) : null}
+          </form>
+        )}
 
         <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
