@@ -24,6 +24,8 @@ export interface Profile {
   birth_control_type?: string | null;
   birth_control_reminder?: string | null;
   clue_connect_enabled?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DayLog {
