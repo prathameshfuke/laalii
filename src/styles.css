@@ -14,7 +14,9 @@
   --radius-4xl: calc(var(--radius) + 28px);
 
   --font-serif: "Lora", Georgia, serif;
-  --font-sans: "Nunito Sans", system-ui, sans-serif;
+  --font-sans: "DM Sans", "Nunito Sans", system-ui, sans-serif;
+  --font-body: "Nunito Sans", system-ui, sans-serif;
+
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -43,8 +45,12 @@
   --color-mauve: var(--mauve);
   --color-sage: var(--sage);
   --color-ink: var(--ink);
+  --color-muted-ink: var(--muted-ink);
+  --color-line: var(--line);
+  --color-sage-deep: var(--sage-deep);
   --color-cream: var(--cream);
   --color-shell: var(--shell);
+
 
   --color-chart-1: var(--rose);
   --color-chart-2: var(--apricot);
@@ -65,6 +71,10 @@
   --marigold: oklch(0.76 0.132 68); /* #E8A33D */
   --mauve: oklch(0.74 0.072 310); /* #B99BC4 */
   --sage: oklch(0.78 0.041 137); /* #A9BCA0 */
+  --sage-deep: oklch(0.51 0.038 140); /* #61725F */
+  --muted-ink: oklch(0.52 0.023 52); /* #796D64 */
+  --line: oklch(0.86 0.026 72); /* #DDCFC1 */
+
 
   --background: var(--cream);
   --foreground: var(--ink);
